@@ -1,0 +1,5 @@
+/media/sf_workspace/analyser/bank-statement-analysis/bank-statement-portal/src/main/java/com/bankstatement/analysis/security/configuration/RetryConfiguration.java
+/media/sf_workspace/analyser/bank-statement-analysis/bank-statement-portal/src/main/java/com/bankstatement/analysis/BankStatementAnalysisApplication.java
+/media/sf_workspace/analyser/bank-statement-analysis/bank-statement-portal/src/main/java/com/bankstatement/analysis/security/configuration/Interceptor.java
+/media/sf_workspace/analyser/bank-statement-analysis/bank-statement-portal/src/main/java/com/bankstatement/analysis/security/configuration/WebMvcConfiguration.java
+/media/sf_workspace/analyser/bank-statement-analysis/bank-statement-portal/src/main/java/com/bankstatement/analysis/security/configuration/SecurityConfiguration.java
