@@ -1,0 +1,26 @@
+server:
+  port: 9035
+  servlet:
+    context-path: /bank-statement-analysis
+    
+
+
+spring.jpa.hibernate.ddl-auto: update
+#spring.datasource.url: jdbc:mysql://localhost:3309/nsbl?useSSL=false&serverTimezone=UTC
+#spring.datasource.username: root
+#spring.datasource.password: hotfoot@123
+
+spring.datasource.url: jdbc:mysql://localhost:3306/bankstatement
+spring.datasource.username: root
+spring.datasource.password: root
+
+spring.jpa.properties.hibernate.dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+hibernate.dialect.storage_engine: innodb
+spring.jpa.properties.hibernate.globally_quoted_identifiers: true 
+
+spring.jpa.show-sql: false
+spring.jpa.generate-ddl: true 
+spring.main.allow-bean-definition-overriding: true
+
+security.secretKey: 8b96bbf9
+security.salt: 0x1b

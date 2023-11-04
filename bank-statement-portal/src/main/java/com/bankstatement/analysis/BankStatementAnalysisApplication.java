@@ -11,10 +11,10 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootApplication(scanBasePackages = { "com.bankstatement.analysis" },exclude= {UserDetailsServiceAutoConfiguration.class})
-@ComponentScan("com.bankstatement.analysis")
-@EnableJpaRepositories(basePackages = "com.bankstatement.analysis")
-@EntityScan(basePackages = "com.bankstatement.analysis")
+@SpringBootApplication(scanBasePackages = { "com.bankstatement" },exclude= {UserDetailsServiceAutoConfiguration.class})
+@ComponentScan("com.bankstatement")
+@EnableJpaRepositories(basePackages = "com.bankstatement")
+@EntityScan(basePackages = "com.bankstatement")
 @EnableJpaAuditing
 @EnableAsync
 @EnableScheduling

@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.bank.statement.perfios.impl.PerifiosBankStatementServiceImpl;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
+import com.bankstatement.perfios.impl.PerifiosBankStatementServiceImpl;
 
 @RestController
 @RequestMapping("/rest/bank")
@@ -21,8 +21,8 @@ public class StatementController {
 	@PostMapping("/initate-statement")
 	public ResponseEntity<?> processStatement(@RequestBody InitiateRequestPojo initiateRequestPojo) {
 
-		if (StringUtils.isNotEmpty(initiateRequestPojo.getRequestType())) {
-			if ("Perifios".equalsIgnoreCase(initiateRequestPojo.getRequestType())) {
+		if (StringUtils.isNotEmpty(initiateRequestPojo.getProcessType())) {
+			if ("Perifios".equalsIgnoreCase(initiateRequestPojo.getProcessType())) {
 				perifiosBankStatementServiceImpl.initiateTransaction(initiateRequestPojo);
 			}
 		}

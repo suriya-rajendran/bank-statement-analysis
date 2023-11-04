@@ -22,4 +22,14 @@ public class InitiateRequestPojo implements Serializable {
 
 	private String requestType;
 
+	private String name;
+
+	private boolean pennyDropVerification;
+
+	private boolean nameMatch;
+
+	private String processId;
+
+	private String url;
+
 }
