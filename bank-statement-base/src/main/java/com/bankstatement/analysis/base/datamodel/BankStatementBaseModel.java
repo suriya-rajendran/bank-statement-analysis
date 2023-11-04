@@ -63,9 +63,9 @@ public abstract class BankStatementBaseModel {
 	@Column(name = "process_id")
 	private String processId;
 
-	@Column(name = "gst_status")
+	@Column(name = "status")
 	@Enumerated(EnumType.STRING)
-	private STATUS status;
+	private STATUS status=STATUS.INITIATED;
 
 	@PrePersist
 	public void prePersist() {

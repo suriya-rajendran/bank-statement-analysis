@@ -6,6 +6,8 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,8 @@ public class ProductService {
 
 	@Value("${product.environment.count:100}")
 	private int productEnvironmentCount;
+
+	public final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
 	@Transactional
 	public HashMap<String, String> saveProductDetails(ProductDetailsPojo productDetailsPojo) {
@@ -60,7 +64,7 @@ public class ProductService {
 		if (!CollectionUtils.isEmpty(details) && details.size() == 3) {
 			return details.get(0);
 		}
-		//TODO throw ex
+		// TODO throw ex
 		return null;
 	}
 

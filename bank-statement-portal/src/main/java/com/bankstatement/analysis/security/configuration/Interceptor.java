@@ -1,7 +1,9 @@
 package com.bankstatement.analysis.security.configuration;
 
+import java.io.IOException;
 import java.util.List;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -40,6 +42,7 @@ public class Interceptor implements HandlerInterceptor {
 			}
 			valid = product.validToken(PRODUCT_DETAILS_SERVICE.valueOf(data.get(1)), data.get(2));
 			request.setAttribute("product_code", data.get(0));
+
 			if (!valid) {
 				throw new Exception("Invalid Token");
 			}
@@ -48,5 +51,5 @@ public class Interceptor implements HandlerInterceptor {
 		}
 		return valid;
 	}
-
+ 
 }

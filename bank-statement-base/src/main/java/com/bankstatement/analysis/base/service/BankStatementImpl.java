@@ -23,7 +23,7 @@ public class BankStatementImpl {
 	@Transactional
 	public BankStatementInitiate saveBankStatementInitiate(BankStatementInitiate bankStatementInitiate) {
 		try {
-			return bsInitiateRepository.save(bankStatementInitiate);
+			return bsInitiateRepository.saveAndFlush(bankStatementInitiate);
 		} catch (Exception e) {
 			logger.error(" error while saving initiate bs processId: " + bankStatementInitiate.getProcessId(), e);
 		}
@@ -31,9 +31,9 @@ public class BankStatementImpl {
 
 	}
 
-	public BankStatementInitiate getBankStatementInitiateByRequestId(String requestId) {
+	public BankStatementInitiate getBankStatementInitiateByRequestId(String requestId,String productCode) {
 		try {
-			return bsInitiateRepository.findByRequestId(requestId);
+			return bsInitiateRepository.findByRequestIdAndProductCode(requestId,productCode);
 		} catch (Exception e) {
 			logger.error(" error while fetching initiate bs requestId: " + requestId, e);
 		}

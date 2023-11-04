@@ -1,6 +1,8 @@
 package com.bankstatement.perfios.impl;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -18,18 +20,17 @@ public class PerifiosBankStatementServiceImpl
 	@Autowired
 	BankStatementImpl bankStatementImpl;
 
-	@Value("${vendor.code:PFS}")
+	public final static Logger logger = LoggerFactory.getLogger(PerifiosBankStatementServiceImpl.class);
+
+	@Value("${perifios.code:PFS}")
 	private String vendorCode;
 
-	@Override
-	public ResponseEntity<?> fetchTransactionDetails(InitiateRequestPojo initiateRequestPojo) {
-		BankStatementInitiate bsinitiate = bankStatementImpl
-				.getBankStatementInitiateByProcessId(initiateRequestPojo.getProcessId());
-		if (bsinitiate != null) {
-			initiateRequestPojo.setUrl("https://www.google.com/");
-			return ResponseEntity.ok(initiateRequestPojo);
-		}
-		return null;
+	public ResponseEntity<?> fetchTransactionDetails(BankStatementInitiate bsinitiate) {
+		InitiateRequestPojo initiateRequestPojo = new InitiateRequestPojo();
+		initiateRequestPojo.setUrl(bsinitiate.getRequestUrl());
+		initiateRequestPojo.setRequestId(bsinitiate.getRequestId());
+		initiateRequestPojo.setProcessId(bsinitiate.getProcessId());
+		return ResponseEntity.ok(initiateRequestPojo);
 	}
 
 	@Override
@@ -37,11 +38,11 @@ public class PerifiosBankStatementServiceImpl
 		if (!StringUtils.isEmpty(initiateRequestPojo.getRequestId())) {
 
 			BankStatementInitiate bsinitiate = bankStatementImpl
-					.getBankStatementInitiateByRequestId(initiateRequestPojo.getRequestId());
+					.getBankStatementInitiateByRequestId(initiateRequestPojo.getRequestId(), productCode);
 			if (bsinitiate == null) {
 				bsinitiate = new BankStatementInitiate();
 				bsinitiate.setRequestId(initiateRequestPojo.getRequestId());
-				bsinitiate.setProcessId(vendorCode);
+				bsinitiate.setProcessId(productCode.toUpperCase()+"-"+vendorCode+"-");
 			}
 			bsinitiate.setProductCode(productCode);
 			bsinitiate.setProcessType(initiateRequestPojo.getProcessType());
@@ -50,8 +51,9 @@ public class PerifiosBankStatementServiceImpl
 			bsinitiate.setName(initiateRequestPojo.getName());
 			bsinitiate.setNameMatch(initiateRequestPojo.isNameMatch());
 			bsinitiate.setPennyDropVerification(initiateRequestPojo.isPennyDropVerification());
-
-			initiateRequestPojo.setUrl("https://www.google.com/");
+			bsinitiate.setRequestUrl("https://www.google.com/");
+			
+			initiateRequestPojo.setUrl(bsinitiate.getRequestUrl());
 			initiateRequestPojo.setProcessId(bsinitiate.getProcessId());
 			bankStatementImpl.saveBankStatementInitiate(bsinitiate);
 			return ResponseEntity.ok(initiateRequestPojo);

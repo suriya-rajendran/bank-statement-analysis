@@ -6,7 +6,7 @@ import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 
 public interface BSInitiateRepository extends JpaRepository<BankStatementInitiate, Long> {
 
-	BankStatementInitiate findByRequestId(String requestId);
+	BankStatementInitiate findByRequestIdAndProductCode(String requestId,String productCode);
 
 	BankStatementInitiate findByProcessId(String processId);
 

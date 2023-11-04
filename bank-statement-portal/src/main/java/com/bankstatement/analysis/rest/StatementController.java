@@ -1,6 +1,10 @@
 package com.bankstatement.analysis.rest;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,7 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.service.BankStatementImpl;
+import com.bankstatement.analysis.base.service.DashboardService;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
 import com.bankstatement.perfios.impl.PerifiosBankStatementServiceImpl;
 
@@ -24,12 +30,15 @@ public class StatementController {
 	@Autowired
 	BankStatementImpl bankStatementImpl;
 
+	public final static Logger logger = LoggerFactory.getLogger(StatementController.class);
+
 	@PostMapping("/initate-statement")
-	public ResponseEntity<?> processStatement(@RequestBody InitiateRequestPojo initiateRequestPojo,
-			@RequestParam(value = "product_code", required = false) String productCode) {
+	public ResponseEntity<?> processStatement(HttpServletRequest request,
+			@RequestBody InitiateRequestPojo initiateRequestPojo) {
 		if (StringUtils.isNotEmpty(initiateRequestPojo.getProcessType())) {
 			if ("Perifios".equalsIgnoreCase(initiateRequestPojo.getProcessType())) {
-				return perifiosBankStatementServiceImpl.initiateTransaction(initiateRequestPojo, productCode);
+				return perifiosBankStatementServiceImpl.initiateTransaction(initiateRequestPojo,
+						getProductCode(request));
 			}
 		}
 		return ResponseEntity.badRequest().body("Invalid ProcessId type");
@@ -37,12 +46,21 @@ public class StatementController {
 	}
 
 	@GetMapping("/fetch/initate-detail")
-	public ResponseEntity<?> processStatement(@RequestParam(value = "process_id", required = false) String processId,
-			@RequestParam(value = "product_code", required = false) String productCode) {
+	public ResponseEntity<?> processStatement(@RequestParam(value = "process_id") String processId) {
 		if (StringUtils.isNotEmpty(processId)) {
-			return bankStatementImpl.fetchTransactionDetails(processId);
+			BankStatementInitiate bankStatementInitiate = bankStatementImpl
+					.getBankStatementInitiateByProcessId(processId);
+			if (bankStatementInitiate != null) {
+				if ("Perifios".equalsIgnoreCase(bankStatementInitiate.getProcessType())) {
+					return perifiosBankStatementServiceImpl.fetchTransactionDetails(bankStatementInitiate);
+				}
+			}
 		}
 		return ResponseEntity.badRequest().body("Invalid ProcessId");
 
+	}
+
+	private String getProductCode(HttpServletRequest request) {
+		return (String) request.getAttribute("product_code");
 	}
 }
