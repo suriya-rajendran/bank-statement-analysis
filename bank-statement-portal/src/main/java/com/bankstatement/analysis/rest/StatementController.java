@@ -29,10 +29,10 @@ public class StatementController {
 			@RequestParam(value = "product_code", required = false) String productCode) {
 		if (StringUtils.isNotEmpty(initiateRequestPojo.getProcessType())) {
 			if ("Perifios".equalsIgnoreCase(initiateRequestPojo.getProcessType())) {
-				perifiosBankStatementServiceImpl.initiateTransaction(initiateRequestPojo, productCode);
+				return perifiosBankStatementServiceImpl.initiateTransaction(initiateRequestPojo, productCode);
 			}
 		}
-		return ResponseEntity.badRequest().body("Invalid statement type");
+		return ResponseEntity.badRequest().body("Invalid ProcessId type");
 
 	}
 
@@ -40,9 +40,9 @@ public class StatementController {
 	public ResponseEntity<?> processStatement(@RequestParam(value = "process_id", required = false) String processId,
 			@RequestParam(value = "product_code", required = false) String productCode) {
 		if (StringUtils.isNotEmpty(processId)) {
-			bankStatementImpl.fetchTransactionDetails(processId);
+			return bankStatementImpl.fetchTransactionDetails(processId);
 		}
-		return ResponseEntity.badRequest().body("Invalid statement type");
+		return ResponseEntity.badRequest().body("Invalid ProcessId");
 
 	}
 }

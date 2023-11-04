@@ -41,16 +41,18 @@ public class PerifiosBankStatementServiceImpl
 			if (bsinitiate == null) {
 				bsinitiate = new BankStatementInitiate();
 				bsinitiate.setRequestId(initiateRequestPojo.getRequestId());
+				bsinitiate.setProcessId(vendorCode);
 			}
 			bsinitiate.setProductCode(productCode);
 			bsinitiate.setProcessType(initiateRequestPojo.getProcessType());
 			bsinitiate.setRequestType(initiateRequestPojo.getRequestType());
-			bsinitiate.setProcessId(vendorCode);
+
 			bsinitiate.setName(initiateRequestPojo.getName());
 			bsinitiate.setNameMatch(initiateRequestPojo.isNameMatch());
 			bsinitiate.setPennyDropVerification(initiateRequestPojo.isPennyDropVerification());
 
 			initiateRequestPojo.setUrl("https://www.google.com/");
+			initiateRequestPojo.setProcessId(bsinitiate.getProcessId());
 			bankStatementImpl.saveBankStatementInitiate(bsinitiate);
 			return ResponseEntity.ok(initiateRequestPojo);
 		} else {
