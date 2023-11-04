@@ -27,7 +27,7 @@ public class ProductController {
 	}
 	
 	@GetMapping(value = "/rest/fetch/product-token")
-	public HashMap<String, String> fetchProductDetails(@RequestParam("product_code") String productCode) {
+	public HashMap<String, String> fetchProductDetails(@RequestParam("product_code") String productCode) throws Exception {
 		return productService.fetchProductDetails(productCode);
 
 	}

@@ -4,14 +4,15 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.service.BankStatementImpl;
 import com.bankstatement.analysis.base.service.BankStatementService;
+import com.bankstatement.analysis.request.pojo.CustomException;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
+import com.bankstatement.perfios.configuration.PerfiosConfiguration;
 
 @Service
 public class PerifiosBankStatementServiceImpl
@@ -19,11 +20,12 @@ public class PerifiosBankStatementServiceImpl
 
 	@Autowired
 	BankStatementImpl bankStatementImpl;
+	
+	@Autowired
+	PerfiosConfiguration perfiosConfiguration;
 
 	public final static Logger logger = LoggerFactory.getLogger(PerifiosBankStatementServiceImpl.class);
-
-	@Value("${perifios.code:PFS}")
-	private String vendorCode;
+ 
 
 	public ResponseEntity<?> fetchTransactionDetails(BankStatementInitiate bsinitiate) {
 		InitiateRequestPojo initiateRequestPojo = new InitiateRequestPojo();
@@ -42,7 +44,7 @@ public class PerifiosBankStatementServiceImpl
 			if (bsinitiate == null) {
 				bsinitiate = new BankStatementInitiate();
 				bsinitiate.setRequestId(initiateRequestPojo.getRequestId());
-				bsinitiate.setProcessId(productCode.toUpperCase()+"-"+vendorCode+"-");
+				bsinitiate.setProcessId(productCode.toUpperCase()+"-"+perfiosConfiguration.getVendorCode()+"-");
 			}
 			bsinitiate.setProductCode(productCode);
 			bsinitiate.setProcessType(initiateRequestPojo.getProcessType());
@@ -58,7 +60,7 @@ public class PerifiosBankStatementServiceImpl
 			bankStatementImpl.saveBankStatementInitiate(bsinitiate);
 			return ResponseEntity.ok(initiateRequestPojo);
 		} else {
-			return ResponseEntity.badRequest().body("Request Id cannot be empty");
+			throw new CustomException("400", "Request Id cannot be empty");
 		}
 	}
 

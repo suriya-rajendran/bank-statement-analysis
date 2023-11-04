@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.service.BankStatementImpl;
 import com.bankstatement.analysis.base.service.DashboardService;
+import com.bankstatement.analysis.request.pojo.CustomException;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
 import com.bankstatement.perfios.impl.PerifiosBankStatementServiceImpl;
 
@@ -41,7 +42,7 @@ public class StatementController {
 						getProductCode(request));
 			}
 		}
-		return ResponseEntity.badRequest().body("Invalid ProcessId type");
+		throw new CustomException("400", "Invalid ProcessId type");
 
 	}
 
@@ -56,7 +57,7 @@ public class StatementController {
 				}
 			}
 		}
-		return ResponseEntity.badRequest().body("Invalid ProcessId");
+		throw new CustomException("400", "Invalid ProcessId");
 
 	}
 

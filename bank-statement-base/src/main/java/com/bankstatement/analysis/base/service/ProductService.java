@@ -17,6 +17,7 @@ import com.bankstatement.analysis.base.datamodel.Product;
 import com.bankstatement.analysis.base.datamodel.ProductDetails.PRODUCT_DETAILS_SERVICE;
 import com.bankstatement.analysis.base.repo.ProductRepository;
 import com.bankstatement.analysis.base.util.EncryptionDecryptionUtil;
+import com.bankstatement.analysis.request.pojo.CustomException;
 import com.bankstatement.analysis.request.pojo.ProductDetailsPojo;
 
 @Service
@@ -50,13 +51,13 @@ public class ProductService {
 		return product.getSpecificProductDetail(PRODUCT_DETAILS_SERVICE.valueOf(productEnvironment.toUpperCase()));
 	}
 
-	public HashMap<String, String> fetchProductDetails(String productCode) {
+	public HashMap<String, String> fetchProductDetails(String productCode) throws Exception {
 
 		Product product = productRepository.findByProductCode(productCode);
 		if (product != null) {
 			return product.getSpecificProductDetail(PRODUCT_DETAILS_SERVICE.valueOf(productEnvironment.toUpperCase()));
 		}
-		return null;
+		throw new CustomException("400", "Invalid Product");
 	}
 
 	public String getProductCode(HttpServletRequest request) {
@@ -64,8 +65,7 @@ public class ProductService {
 		if (!CollectionUtils.isEmpty(details) && details.size() == 3) {
 			return details.get(0);
 		}
-		// TODO throw ex
-		return null;
+		throw new CustomException("400", "Invalid Product");
 	}
 
 	private List<String> decryptDetails(HttpServletRequest request) {
