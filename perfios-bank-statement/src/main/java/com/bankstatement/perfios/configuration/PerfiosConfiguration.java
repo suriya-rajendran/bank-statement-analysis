@@ -9,17 +9,23 @@ import lombok.Data;
 @Configuration
 @Data
 public class PerfiosConfiguration {
-	
-	private String vendorCode="PFS";
+
+	private String vendorCode = "PFS";
 
 	private String returnUrl;
 
 	private String callBackUrl;
 
 	private String vendor;
-	
+
+	private String initTransactionUrl;
+
+	private String txnStatusUrl;
+
+	private String retrieveReportUrl;
+
 	private String version;
-	
+
 	private String privateKeyPath;
 
 	private String reportFormat;

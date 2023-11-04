@@ -15,8 +15,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
+import com.bankstatement.analysis.base.datamodel.BankStatementReport;
+import com.bankstatement.analysis.base.datamodel.BankStatementTransaction;
 import com.bankstatement.analysis.base.service.BankStatementImpl;
-import com.bankstatement.analysis.base.service.DashboardService;
 import com.bankstatement.analysis.request.pojo.CustomException;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
 import com.bankstatement.perfios.impl.PerifiosBankStatementServiceImpl;
@@ -35,7 +36,7 @@ public class StatementController {
 
 	@PostMapping("/initate-statement")
 	public ResponseEntity<?> processStatement(HttpServletRequest request,
-			@RequestBody InitiateRequestPojo initiateRequestPojo) {
+			@RequestBody InitiateRequestPojo initiateRequestPojo) throws Exception {
 		if (StringUtils.isNotEmpty(initiateRequestPojo.getProcessType())) {
 			if ("Perifios".equalsIgnoreCase(initiateRequestPojo.getProcessType())) {
 				return perifiosBankStatementServiceImpl.initiateTransaction(initiateRequestPojo,
@@ -47,17 +48,49 @@ public class StatementController {
 	}
 
 	@GetMapping("/fetch/initate-detail")
-	public ResponseEntity<?> processStatement(@RequestParam(value = "process_id") String processId) {
+	public ResponseEntity<?> fetchTransactionDetails(@RequestParam(value = "process_id") String processId)
+			throws Exception {
 		if (StringUtils.isNotEmpty(processId)) {
 			BankStatementInitiate bankStatementInitiate = bankStatementImpl
 					.getBankStatementInitiateByProcessId(processId);
 			if (bankStatementInitiate != null) {
 				if ("Perifios".equalsIgnoreCase(bankStatementInitiate.getProcessType())) {
-					return perifiosBankStatementServiceImpl.fetchTransactionDetails(bankStatementInitiate);
+					return perifiosBankStatementServiceImpl.transactionStatus(bankStatementInitiate);
 				}
 			}
 		}
 		throw new CustomException("400", "Invalid ProcessId");
+
+	}
+
+	@GetMapping("/initate-report")
+	public ResponseEntity<?> initiateReport(@RequestParam(value = "process_id") String processId) throws Exception {
+		if (StringUtils.isNotEmpty(processId)) {
+			BankStatementTransaction bankStatementTransaction = bankStatementImpl
+					.getBankStatementTransactionByProcessId(processId);
+			if (bankStatementTransaction != null) {
+				if ("Perifios".equalsIgnoreCase(bankStatementTransaction.getProcessType())) {
+					return perifiosBankStatementServiceImpl.initiateReport(bankStatementTransaction);
+				}
+			}
+		}
+		throw new CustomException("400", "Invalid ProcessId type");
+
+	}
+
+	@GetMapping("/download-report")
+	public ResponseEntity<?> reportFile(@RequestParam(value = "process_id") String processId,
+			@RequestParam(value = "transaction_id") String transactionId) throws Exception {
+		if (StringUtils.isNotEmpty(processId)) {
+			BankStatementReport bankStatementReport = bankStatementImpl
+					.getBSReportByProcessIdAndTransactionId(processId, transactionId);
+			if (bankStatementReport != null) {
+				if ("Perifios".equalsIgnoreCase(bankStatementReport.getProcessType())) {
+					return perifiosBankStatementServiceImpl.reportLink(bankStatementReport);
+				}
+			}
+		}
+		throw new CustomException("400", "Invalid ProcessId type");
 
 	}
 

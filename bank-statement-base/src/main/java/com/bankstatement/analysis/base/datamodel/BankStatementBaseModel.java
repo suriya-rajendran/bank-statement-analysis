@@ -29,7 +29,7 @@ public abstract class BankStatementBaseModel {
 
 	@Id
 	@GeneratedValue(generator = "ID_GENERATOR")
-	@Column(name = "id") 
+	@Column(name = "id")
 	private Long id;
 
 	@Version
@@ -50,31 +50,41 @@ public abstract class BankStatementBaseModel {
 	private Timestamp responseDate;
 
 	@Lob
-	@Column(name = "request", length = 80000)
+	@Column(name = "request")
 	private String request;
-	 
+
 	@Column(name = "request_url")
 	private String requestUrl;
 
 	@Lob
-	@Column(name = "response", length = 80000)
+	@Column(name = "response")
 	private String response;
+
+	@Column(name = "response_code")
+	private String responseCode;
 
 	@Column(name = "process_id")
 	private String processId;
 
+	@Column(name = "process_type")
+	private String processType;
+
 	@Column(name = "status")
 	@Enumerated(EnumType.STRING)
-	private STATUS status=STATUS.INITIATED;
+	private STATUS status = STATUS.INITIATED;
 
 	@PrePersist
 	public void prePersist() {
-		this.version = 1; 
+		this.version = 1;
 		this.requestDate = new Timestamp(new Date().getTime());
 	}
 
 	public void setProcessId(String processId) {
-		this.processId = processId+UUID.randomUUID().toString().replaceAll("-", "");
+		this.processId = processId + UUID.randomUUID().toString().replaceAll("-", "");
+	}
+
+	public void setCustomProcessId(String processId) {
+		this.processId = processId;
 	}
 
 	@PreUpdate

@@ -28,9 +28,6 @@ public class BankStatementInitiate extends BankStatementBaseModel implements Ser
 	@Column(name = "product_code")
 	private String productCode;
 
-	@Column(name = "process_type")
-	private String processType;
-
 	@Column(name = "request_type")
 	private String requestType;
 
@@ -45,10 +42,10 @@ public class BankStatementInitiate extends BankStatementBaseModel implements Ser
 
 	@Column(name = "penny_drop_status")
 	@Enumerated(EnumType.STRING)
-	private PENNYDROPSTATUS pennyDropStatus = PENNYDROPSTATUS.NOT_INITIATED;
+	private PENNYDROPSTATUS pennyDropStatus = PENNYDROPSTATUS.NO_PENNY_DROP;
 
 	public enum PENNYDROPSTATUS {
-		NOT_INITIATED, INITIATED, FAILED, COMPLETED, PENDING
+		NO_PENNY_DROP, INITIATED, FAILED, COMPLETED, PENDING
 	}
 
 }

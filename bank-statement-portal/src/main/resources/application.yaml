@@ -24,3 +24,5 @@ spring.main.allow-bean-definition-overriding: true
 
 security.secretKey: 8b96bbf9
 security.salt: 0x1b
+
+report.downloadPath: 

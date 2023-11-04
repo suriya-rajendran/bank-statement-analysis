@@ -47,9 +47,9 @@ import com.bankstatement.perfios.configuration.PerfiosConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
-public class BsaPerfiosHelper {
+public class PerfiosHelper {
 
-	private static final Logger logger = LoggerFactory.getLogger(BsaPerfiosHelper.class);
+	private static final Logger logger = LoggerFactory.getLogger(PerfiosHelper.class);
 
 	public static final String SIGNED_HEADER_NAMES = "host;x-perfios-content-sha256;x-perfios-date\n";
 

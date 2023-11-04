@@ -35,5 +35,9 @@ public class InitiateRequestPojo implements Serializable {
 	private String processId;
 
 	private String url;
+	
+	private String expiry;
+	
+	private String status;
 
 }
