@@ -25,6 +25,9 @@ public class BankStatementInitiate extends BankStatementBaseModel implements Ser
 	@Column(name = "request_id")
 	private String requestId;
 
+	@Column(name = "product_code")
+	private String productCode;
+
 	@Column(name = "process_type")
 	private String processType;
 

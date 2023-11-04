@@ -19,8 +19,8 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		Interceptor interceptor = new Interceptor(productRepository);
+		
 		List<String> pathPatterns = new ArrayList<>();
-
 		pathPatterns.add("/rest/bank/**");
 		pathPatterns.add("/rest/profile/**");
 

@@ -39,6 +39,7 @@ public class Interceptor implements HandlerInterceptor {
 				throw new Exception("Invalid Token");
 			}
 			valid = product.validToken(PRODUCT_DETAILS_SERVICE.valueOf(data.get(1)), data.get(2));
+			request.setAttribute("product_code", data.get(0));
 			if (!valid) {
 				throw new Exception("Invalid Token");
 			}

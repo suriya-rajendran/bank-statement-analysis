@@ -5,10 +5,12 @@ import javax.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.repo.BSInitiateRepository;
+import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
 
 @Component
 public class BankStatementImpl {
@@ -47,6 +49,19 @@ public class BankStatementImpl {
 		}
 		return null;
 
+	}
+
+	public ResponseEntity<InitiateRequestPojo> fetchTransactionDetails(String processId) {
+
+		BankStatementInitiate bsinitiate = getBankStatementInitiateByProcessId(processId);
+		if (bsinitiate != null) {
+			InitiateRequestPojo initiateRequestPojo = new InitiateRequestPojo();
+			initiateRequestPojo.setUrl("https://www.google.com/");
+			initiateRequestPojo.setRequestId(bsinitiate.getRequestId());
+			initiateRequestPojo.setProcessId(processId);
+			return ResponseEntity.ok(initiateRequestPojo);
+		}
+		return null;
 	}
 
 }

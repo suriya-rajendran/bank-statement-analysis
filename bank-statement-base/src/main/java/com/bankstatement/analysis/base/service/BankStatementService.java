@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public interface BankStatementService<It, Ts, Ir, Rs> {
-	ResponseEntity<?> initiateTransaction(It requestBody);
+	ResponseEntity<?> initiateTransaction(It requestBody,String productCode);
 
 	ResponseEntity<?> fetchTransactionDetails(It requestBody);
 

@@ -9,6 +9,7 @@ import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import com.bankstatement.analysis.base.datamodel.Product;
 import com.bankstatement.analysis.base.datamodel.ProductDetails.PRODUCT_DETAILS_SERVICE;
@@ -46,11 +47,20 @@ public class ProductService {
 	}
 
 	public HashMap<String, String> fetchProductDetails(String productCode) {
-	 
+
 		Product product = productRepository.findByProductCode(productCode);
 		if (product != null) {
 			return product.getSpecificProductDetail(PRODUCT_DETAILS_SERVICE.valueOf(productEnvironment.toUpperCase()));
 		}
+		return null;
+	}
+
+	public String getProductCode(HttpServletRequest request) {
+		List<String> details = decryptDetails(request);
+		if (!CollectionUtils.isEmpty(details) && details.size() == 3) {
+			return details.get(0);
+		}
+		//TODO throw ex
 		return null;
 	}
 
@@ -60,9 +70,8 @@ public class ProductService {
 
 	}
 
-	public void saveProductDetails(HttpServletRequest request) {
-		List<String> details = decryptDetails(request);
-		Product product = productRepository.findByProductCode(details.get(0));
+	public void updateValidityCount(String productCode) {
+		Product product = productRepository.findByProductCode(productCode);
 		if (product == null) {
 			return;
 		}
@@ -73,7 +82,7 @@ public class ProductService {
 
 	public ProductDetailsPojo fetchProfileDetails(HttpServletRequest request) {
 		List<String> details = decryptDetails(request);
-		ProductDetailsPojo productPojo=new ProductDetailsPojo();
+		ProductDetailsPojo productPojo = new ProductDetailsPojo();
 		Product product = productRepository.findByProductCode(details.get(0));
 		if (product != null) {
 			productPojo.setCode(product.getProductCode());

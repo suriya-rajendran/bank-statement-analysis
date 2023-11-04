@@ -26,13 +26,14 @@ public class PerifiosBankStatementServiceImpl
 		BankStatementInitiate bsinitiate = bankStatementImpl
 				.getBankStatementInitiateByProcessId(initiateRequestPojo.getProcessId());
 		if (bsinitiate != null) {
+			initiateRequestPojo.setUrl("https://www.google.com/");
 			return ResponseEntity.ok(initiateRequestPojo);
 		}
 		return null;
 	}
 
 	@Override
-	public ResponseEntity<?> initiateTransaction(InitiateRequestPojo initiateRequestPojo) {
+	public ResponseEntity<?> initiateTransaction(InitiateRequestPojo initiateRequestPojo, String productCode) {
 		if (!StringUtils.isEmpty(initiateRequestPojo.getRequestId())) {
 
 			BankStatementInitiate bsinitiate = bankStatementImpl
@@ -41,6 +42,7 @@ public class PerifiosBankStatementServiceImpl
 				bsinitiate = new BankStatementInitiate();
 				bsinitiate.setRequestId(initiateRequestPojo.getRequestId());
 			}
+			bsinitiate.setProductCode(productCode);
 			bsinitiate.setProcessType(initiateRequestPojo.getProcessType());
 			bsinitiate.setRequestType(initiateRequestPojo.getRequestType());
 			bsinitiate.setProcessId(vendorCode);
@@ -48,6 +50,8 @@ public class PerifiosBankStatementServiceImpl
 			bsinitiate.setNameMatch(initiateRequestPojo.isNameMatch());
 			bsinitiate.setPennyDropVerification(initiateRequestPojo.isPennyDropVerification());
 
+			initiateRequestPojo.setUrl("https://www.google.com/");
+			bankStatementImpl.saveBankStatementInitiate(bsinitiate);
 			return ResponseEntity.ok(initiateRequestPojo);
 		} else {
 			return ResponseEntity.badRequest().body("Request Id cannot be empty");
