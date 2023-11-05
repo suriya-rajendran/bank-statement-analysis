@@ -26,6 +26,7 @@ import com.bankstatement.analysis.base.datamodel.BankStatementReport;
 import com.bankstatement.analysis.base.datamodel.BankStatementTransaction;
 import com.bankstatement.analysis.base.service.BankStatementImpl;
 import com.bankstatement.analysis.base.service.BankStatementService;
+import com.bankstatement.analysis.base.service.ProductService;
 import com.bankstatement.analysis.perfios.response.pojo.Part;
 import com.bankstatement.analysis.perfios.response.pojo.TransactionStatusResponse;
 import com.bankstatement.analysis.request.pojo.CustomException;
@@ -50,6 +51,9 @@ public class PerifiosBankStatementServiceImpl implements
 
 	@Autowired
 	PerfiosHelper perfiosHelper;
+	
+	@Autowired
+	ProductService productService;
 
 	public final static Logger logger = LoggerFactory.getLogger(PerifiosBankStatementServiceImpl.class);
 
@@ -98,6 +102,7 @@ public class PerifiosBankStatementServiceImpl implements
 			throws Exception {
 		if (!StringUtils.isEmpty(initiateRequestPojo.getRequestId())) {
 			try {
+				boolean valid = false;
 				BankStatementInitiate bsinitiate = bankStatementImpl
 						.getBankStatementInitiateByRequestId(initiateRequestPojo.getRequestId(), productCode);
 				if (bsinitiate == null) {
@@ -106,10 +111,15 @@ public class PerifiosBankStatementServiceImpl implements
 					bsinitiate.setProcessType(initiateRequestPojo.getProcessType());
 					bsinitiate
 							.setProcessId(productCode.toUpperCase() + "-" + perfiosConfiguration.getVendorCode() + "-");
+					valid = true;
 				}
 				String actualPayload = generateInitiateRequest(initiateRequestPojo, productCode, bsinitiate);
 
 				generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
+				if (STATUS.COMPLETED == bsinitiate.getStatus() && valid) {
+					productService.updateValidityCount(productCode);
+				}
+
 			} catch (IOException | URISyntaxException | ParseException e) {
 				logger.info("error while initiating  ", e);
 				throw new Exception();

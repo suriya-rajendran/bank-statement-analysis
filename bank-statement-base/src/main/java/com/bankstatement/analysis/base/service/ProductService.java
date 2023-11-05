@@ -2,6 +2,7 @@ package com.bankstatement.analysis.base.service;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
@@ -10,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -31,6 +33,9 @@ public class ProductService {
 
 	@Value("${product.environment.count:100}")
 	private int productEnvironmentCount;
+
+	@Autowired
+	BankStatementImpl bankStatementImpl;
 
 	public final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
@@ -74,6 +79,7 @@ public class ProductService {
 
 	}
 
+	@Async
 	public void updateValidityCount(String productCode) {
 		Product product = productRepository.findByProductCode(productCode);
 		if (product == null) {
@@ -84,15 +90,15 @@ public class ProductService {
 
 	}
 
-	public ProductDetailsPojo fetchProfileDetails(HttpServletRequest request) {
-		List<String> details = decryptDetails(request);
+	public ProductDetailsPojo fetchProfileDetails(String productCode, Integer lastRecords) {
 		ProductDetailsPojo productPojo = new ProductDetailsPojo();
-		Product product = productRepository.findByProductCode(details.get(0));
+		Product product = productRepository.findByProductCode(productCode);
 		if (product != null) {
 			productPojo.setCode(product.getProductCode());
 			productPojo.setName(product.getProductName());
 			productPojo.setCount(product.getValidityCount());
-
+			productPojo.getLastInitiatedRecords()
+					.putAll(bankStatementImpl.fetchBankStatementRecords(lastRecords, productCode));
 		}
 		return productPojo;
 	}

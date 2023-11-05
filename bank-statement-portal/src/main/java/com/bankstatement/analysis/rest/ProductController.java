@@ -25,16 +25,22 @@ public class ProductController {
 		return productService.saveProductDetails(productDetailsPojo);
 
 	}
-	
+
 	@GetMapping(value = "/rest/fetch/product-token")
-	public HashMap<String, String> fetchProductDetails(@RequestParam("product_code") String productCode) throws Exception {
+	public HashMap<String, String> fetchProductDetails(@RequestParam("product_code") String productCode)
+			throws Exception {
 		return productService.fetchProductDetails(productCode);
 
 	}
-	
-	@GetMapping(value = "/rest/profile/details")
-	public ProductDetailsPojo fetchProfileDetails(HttpServletRequest request) {
-		return productService.fetchProfileDetails(request);
 
+	@GetMapping(value = "/rest/profile/details")
+	public ProductDetailsPojo fetchProfileDetails(HttpServletRequest request,
+			@RequestParam(defaultValue = "5") Integer lastRecords) {
+		return productService.fetchProfileDetails(getProductCode(request), lastRecords);
+
+	}
+
+	private String getProductCode(HttpServletRequest request) {
+		return (String) request.getAttribute("product_code");
 	}
 }

@@ -19,4 +19,6 @@ public class ProductDetailsPojo implements Serializable {
 
 	private Integer count;
 
+	private HashMap<String, String> lastInitiatedRecords = new HashMap<>();
+
 }

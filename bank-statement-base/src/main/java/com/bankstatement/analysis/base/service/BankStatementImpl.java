@@ -1,12 +1,18 @@
 package com.bankstatement.analysis.base.service;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.transaction.Transactional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
@@ -29,6 +35,23 @@ public class BankStatementImpl {
 	BSReportRepository bsReportRepository;
 
 	public final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+
+	public Map<String, String> fetchBankStatementRecords(Integer days, String productCode) {
+		Pageable limit = PageRequest.of(0,days);
+		return convertObjectToMap(bsInitiateRepository.findByRequestDate(productCode, new Date(), limit));
+
+	}
+
+	private Map<String, String> convertObjectToMap(List<Object[]> obj) {
+
+		Map<String, String> map = new HashMap<>();
+		for (Object[] ob : obj) {
+			Date createdDate = (Date) ob[0];
+			map.put(new SimpleDateFormat("yyyy-MM-dd").format(createdDate), (String) ob[1].toString());
+		}
+		return map;
+
+	}
 
 	@Transactional
 	public BankStatementInitiate saveBankStatementInitiate(BankStatementInitiate bankStatementInitiate)
