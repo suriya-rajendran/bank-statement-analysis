@@ -38,4 +38,5 @@ public class PerfiosConfiguration {
 
 	private String digestAlgorithm = "SHA-256";
 
+	private String downloadReportFormat="pdf";
 }

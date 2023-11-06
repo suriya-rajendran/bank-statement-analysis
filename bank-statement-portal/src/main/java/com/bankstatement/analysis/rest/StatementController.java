@@ -63,7 +63,7 @@ public class StatementController {
 
 	}
 
-	@GetMapping("/initate-report")
+	@PostMapping("/initate-report")
 	public ResponseEntity<?> initiateReport(@RequestParam(value = "process_id") String processId) throws Exception {
 		if (StringUtils.isNotEmpty(processId)) {
 			BankStatementTransaction bankStatementTransaction = bankStatementImpl
@@ -71,6 +71,7 @@ public class StatementController {
 			if (bankStatementTransaction != null) {
 				if ("Perifios".equalsIgnoreCase(bankStatementTransaction.getProcessType())) {
 					return perifiosBankStatementServiceImpl.initiateReport(bankStatementTransaction);
+
 				}
 			}
 		}

@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.bankstatement.analysis.base.datamodel.BankStatementBaseModel.STATUS;
@@ -34,6 +35,7 @@ import com.bankstatement.analysis.request.pojo.CustomException;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
 import com.bankstatement.analysis.request.pojo.TransactionStatusDetail;
 import com.bankstatement.analysis.request.pojo.TransactionStatusPojo;
+import com.bankstatement.perfios.async.AsyncBankStatementService;
 import com.bankstatement.perfios.configuration.PerfiosConfiguration;
 import com.bankstatement.perfios.util.PerfiosHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -55,6 +57,9 @@ public class PerifiosBankStatementServiceImpl implements
 
 	@Autowired
 	ProductService productService;
+
+	@Autowired
+	AsyncBankStatementService asyncBankStatementService;
 
 	public final static Logger logger = LoggerFactory.getLogger(PerifiosBankStatementServiceImpl.class);
 
@@ -236,29 +241,28 @@ public class PerifiosBankStatementServiceImpl implements
 						// TODO Change to debug
 						logger.info("response " + responseBody);
 
-						TransactionStatusResponse transactionStatusResponse = objectMapper.readValue(responseBody,
-								TransactionStatusResponse.class);
+						JSONObject xmlJSONObj = XML.toJSONObject(responseBody);
+
+						TransactionStatusResponse transactionStatusResponse = objectMapper
+								.readValue(xmlJSONObj.toString(), TransactionStatusResponse.class);
 
 						bankStatementTransaction
 								.setResponseCode(String.valueOf(httpResponse.getStatusLine().getStatusCode()));
-						bankStatementTransaction.setResponse(responseBody);
+						bankStatementTransaction.setResponse(xmlJSONObj.toString());
 						if ("completed".equalsIgnoreCase(transactionStatusResponse.getStatus().getProcessing())) {
 							bankStatementTransaction.setStatus(STATUS.COMPLETED);
 						} else {
 							bankStatementTransaction.setStatus(STATUS.PENDING);
 						}
+						Part vo = transactionStatusResponse.getStatus().getPart();
+						TransactionStatusDetail transactionStatusDetail = new TransactionStatusDetail();
 
-						for (Part vo : transactionStatusResponse.getStatus().getPart()) {
-							TransactionStatusDetail transactionStatusDetail = new TransactionStatusDetail();
-
-							transactionStatusDetail.setStatus(vo.getStatus());
-							transactionStatusDetail.setReason(vo.getReason());
-							transactionStatusDetail.setErrorCode(vo.getErrorCode());
-							transactionStatusDetail.setTransactionId(vo.getPerfiosTransactionId());
-
-							getReportStatus(bankStatementTransaction, vo, transactionStatusDetail);
-							transactionStatusPojo.getTransactionDetails().add(transactionStatusDetail);
-						}
+						transactionStatusDetail.setStatus(vo.getStatus());
+						transactionStatusDetail.setReason(vo.getReason());
+						transactionStatusDetail.setErrorCode(vo.getErrorCode());
+						transactionStatusDetail.setTransactionId(vo.getPerfiosTransactionId());
+						getReportStatus(bankStatementTransaction, vo, transactionStatusDetail);
+						transactionStatusPojo.getTransactionDetails().add(transactionStatusDetail);
 
 						transactionStatusPojo.setStatus(transactionStatusResponse.getStatus().getProcessing());
 						bankStatementImpl.saveBankStatementTransaction(bankStatementTransaction);
@@ -267,17 +271,21 @@ public class PerifiosBankStatementServiceImpl implements
 						TransactionStatusResponse transactionStatusResponse = objectMapper
 								.readValue(bankStatementTransaction.getResponse(), TransactionStatusResponse.class);
 
-						for (Part vo : transactionStatusResponse.getStatus().getPart()) {
-							TransactionStatusDetail transactionStatusDetail = new TransactionStatusDetail();
+						Part vo = transactionStatusResponse.getStatus().getPart();
+						TransactionStatusDetail transactionStatusDetail = new TransactionStatusDetail();
 
-							transactionStatusDetail.setStatus(vo.getStatus());
-							transactionStatusDetail.setReason(vo.getReason());
-							transactionStatusDetail.setErrorCode(vo.getErrorCode());
-							transactionStatusDetail.setTransactionId(vo.getPerfiosTransactionId());
-							getReportStatus(bankStatementTransaction, vo, transactionStatusDetail);
+						transactionStatusDetail.setStatus(vo.getStatus());
+						transactionStatusDetail.setReason(vo.getReason());
+						transactionStatusDetail.setErrorCode(vo.getErrorCode());
+						transactionStatusDetail.setTransactionId(vo.getPerfiosTransactionId());
 
-							transactionStatusPojo.getTransactionDetails().add(transactionStatusDetail);
-						}
+						getReportStatus(bankStatementTransaction, vo, transactionStatusDetail);
+
+						transactionStatusPojo.getTransactionDetails().add(transactionStatusDetail);
+
+					}
+					if (STATUS.COMPLETED == bankStatementTransaction.getStatus()) {
+						initiateReport(bankStatementTransaction);
 					}
 				}
 			}
@@ -302,7 +310,7 @@ public class PerifiosBankStatementServiceImpl implements
 			return;
 		}
 
-		transactionStatusDetail.setReportStatus("Not Initiated");
+//		transactionStatusDetail.setReportStatus("Not Initiated");
 	}
 
 	private String createRetrieveReportPayload(String perfiosTxnId, String requestId, String reportType)
@@ -326,47 +334,9 @@ public class PerifiosBankStatementServiceImpl implements
 
 	@Override
 	public ResponseEntity<?> initiateReport(BankStatementTransaction bankStatementTransaction) throws Exception {
+		asyncBankStatementService.initiateAsynReport(bankStatementTransaction);
+		return ResponseEntity.ok("Report initiation successful");
 
-		try {
-
-			TransactionStatusResponse transactionStatusResponse = objectMapper
-					.readValue(bankStatementTransaction.getResponse(), TransactionStatusResponse.class);
-			for (Part vo : transactionStatusResponse.getStatus().getPart()) {
-				BankStatementReport bankStatementReport = bankStatementImpl.getBSReportByProcessIdAndTransactionId(
-						bankStatementTransaction.getProcessId(), vo.getPerfiosTransactionId());
-
-				if (bankStatementReport == null) {
-					bankStatementReport = new BankStatementReport();
-					bankStatementReport.setCustomProcessId(bankStatementTransaction.getProcessId());
-					bankStatementReport.setTransactionId(vo.getPerfiosTransactionId());
-					bankStatementReport.setProcessType(bankStatementTransaction.getProcessType());
-				}
-
-				if (STATUS.COMPLETED != bankStatementReport.getStatus()) {
-
-					String payload = createRetrieveReportPayload(bankStatementReport.getTransactionId(),
-							bankStatementTransaction.getProcessId(), null);
-					JSONObject json = new JSONObject(payload);
-					String actualPayload = XML.toString(json);
-					HttpResponse httpResponse = perfiosHelper.executeRequest(HttpPost.class,
-							perfiosConfiguration.getRetrieveReportUrl(), actualPayload,
-							"application/x-www-form-urlencoded", null, null);
-					String responseBody = EntityUtils.toString(httpResponse.getEntity());
-					logger.debug("response for {} - {}", bankStatementTransaction.getProcessId(), responseBody);
-
-					bankStatementReport.setResponseCode(String.valueOf(httpResponse.getStatusLine().getStatusCode()));
-					bankStatementReport.setResponse(responseBody);
-					bankStatementReport.setStatus(STATUS.COMPLETED);
-
-					bankStatementImpl.saveBankStatementReport(bankStatementReport);
-				}
-			}
-
-			return ResponseEntity.ok("Report initiation successful");
-		} catch (Exception e) {
-			logger.error("Error while report initiate ", e);
-			throw new Exception();
-		}
 	}
 
 	@Override
@@ -376,7 +346,7 @@ public class PerifiosBankStatementServiceImpl implements
 			byte[] responseAsByte = null;
 
 			if (STATUS.COMPLETED == bankStatementReport.getStatus()) {
-				if (bankStatementReport.getData() != null && bankStatementReport.getData().length > 0) {
+				if (bankStatementReport.getData() == null || bankStatementReport.getData().length == 0) {
 					String payloadAsJson = createRetrieveReportPayload(bankStatementReport.getTransactionId(),
 							bankStatementReport.getProcessId(), perfiosConfiguration.getReportFormat());
 					JSONObject json = new JSONObject(payloadAsJson);
@@ -393,7 +363,7 @@ public class PerifiosBankStatementServiceImpl implements
 
 					bankStatementImpl.saveBankStatementReport(bankStatementReport);
 				}
-				if (responseAsByte != null)
+				if (bankStatementReport.getData() != null && bankStatementReport.getData().length > 0)
 					return ResponseEntity.ok()
 							.header("Content-Disposition",
 									"attachment; filename=\"" + bankStatementReport.getTransactionId() + "."

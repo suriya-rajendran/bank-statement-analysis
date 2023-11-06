@@ -13,7 +13,7 @@ import com.bankstatement.analysis.request.pojo.ErrorResponse;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
-	public final static Logger logger = LoggerFactory.getLogger(ExternalRestController.class);
+	public final static Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
 	@ExceptionHandler(CustomException.class)
 	public ResponseEntity<ErrorResponse> handleCustomException(CustomException ex) {
