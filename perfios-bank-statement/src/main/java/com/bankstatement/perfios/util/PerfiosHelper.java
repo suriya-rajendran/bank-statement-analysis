@@ -69,9 +69,11 @@ public class PerfiosHelper {
 	protected PrivateKey privateKey;
 
 	ObjectMapper objectMapper = new ObjectMapper();
-
+	
 	@PostConstruct
 	public void onLoad() {
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+
 		if (!StringUtils.isEmpty(perfiosConfiguration.getPrivateKeyPath()))
 
 			try {
@@ -295,6 +297,7 @@ public class PerfiosHelper {
 		uriBuilder.setScheme("https");
 		uriBuilder.setHost(perfiosConfiguration.getHost());
 		uriBuilder.setPath(perfiosConfiguration.getBaseUrl() + uri);
+
 		if (params != null) {
 			for (Map.Entry<String, Object> entry : params.entrySet()) {
 				if (entry.getValue() instanceof Collection) {
@@ -306,6 +309,8 @@ public class PerfiosHelper {
 				}
 			}
 		}
+		logger.info(uriBuilder.toString());
+		logger.info(uriBuilder.build().toString());
 		return uriBuilder.build();
 	}
 

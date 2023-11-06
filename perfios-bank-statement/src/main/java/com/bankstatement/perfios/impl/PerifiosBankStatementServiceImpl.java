@@ -2,6 +2,7 @@ package com.bankstatement.perfios.impl;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,7 +52,7 @@ public class PerifiosBankStatementServiceImpl implements
 
 	@Autowired
 	PerfiosHelper perfiosHelper;
-	
+
 	@Autowired
 	ProductService productService;
 
@@ -70,6 +71,9 @@ public class PerifiosBankStatementServiceImpl implements
 	@Value("${report.downloadPath}")
 	private String reportDownloadPath;
 
+	private final String[] initiateRequestType = new String[] { "netbankingFetch", "statement", "choice", "choice-all",
+			"nbf-all", "statement-all", "accountAggregator" };
+
 	private String createPayload(String processId, InitiateRequestPojo inputs) throws JsonProcessingException {
 
 		HashMap<String, Object> payload = new HashMap<>();
@@ -77,7 +81,7 @@ public class PerifiosBankStatementServiceImpl implements
 		payload.put("apiVersion", perfiosConfiguration.getVersion());
 		payload.put("vendorId", perfiosConfiguration.getVendor());
 		payload.put("txnId", processId);
-		payload.put("destination", inputs.getProcessType());
+		payload.put("destination", inputs.getRequestType());
 		payload.put("loanAmount", "1000000");
 		payload.put("loanDuration", "36");
 		payload.put("loanType", "Home");
@@ -101,31 +105,35 @@ public class PerifiosBankStatementServiceImpl implements
 	public ResponseEntity<?> initiateTransaction(InitiateRequestPojo initiateRequestPojo, String productCode)
 			throws Exception {
 		if (!StringUtils.isEmpty(initiateRequestPojo.getRequestId())) {
-			try {
-				boolean valid = false;
-				BankStatementInitiate bsinitiate = bankStatementImpl
-						.getBankStatementInitiateByRequestId(initiateRequestPojo.getRequestId(), productCode);
-				if (bsinitiate == null) {
-					bsinitiate = new BankStatementInitiate();
-					bsinitiate.setRequestId(initiateRequestPojo.getRequestId());
-					bsinitiate.setProcessType(initiateRequestPojo.getProcessType());
-					bsinitiate
-							.setProcessId(productCode.toUpperCase() + "-" + perfiosConfiguration.getVendorCode() + "-");
-					valid = true;
-				}
-				String actualPayload = generateInitiateRequest(initiateRequestPojo, productCode, bsinitiate);
+			if (Arrays.asList(initiateRequestType).contains(initiateRequestPojo.getRequestType())) {
+				try {
+					boolean valid = false;
+					BankStatementInitiate bsinitiate = bankStatementImpl
+							.getBankStatementInitiateByRequestId(initiateRequestPojo.getRequestId(), productCode);
+					if (bsinitiate == null) {
+						bsinitiate = new BankStatementInitiate();
+						bsinitiate.setRequestId(initiateRequestPojo.getRequestId());
+						bsinitiate.setProcessType(initiateRequestPojo.getProcessType());
+						bsinitiate.setProcessId(
+								productCode.toUpperCase() + "-" + perfiosConfiguration.getVendorCode() + "-");
+						valid = true;
+					}
+					String actualPayload = generateInitiateRequest(initiateRequestPojo, productCode, bsinitiate);
 
-				generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
-				if (STATUS.COMPLETED == bsinitiate.getStatus() && valid) {
-					productService.updateValidityCount(productCode);
+					generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
+					if (STATUS.COMPLETED == bsinitiate.getStatus() && valid) {
+						productService.updateValidityCount(productCode);
+					}
+
+				} catch (IOException | URISyntaxException | ParseException e) {
+					logger.info("error while initiating  ", e);
+					throw new Exception();
 				}
 
-			} catch (IOException | URISyntaxException | ParseException e) {
-				logger.info("error while initiating  ", e);
-				throw new Exception();
+				return ResponseEntity.ok(initiateRequestPojo);
+			} else {
+				throw new CustomException("400", "Invalid Request Type");
 			}
-
-			return ResponseEntity.ok(initiateRequestPojo);
 		} else {
 			throw new CustomException("400", "Request Id cannot be empty");
 		}
@@ -169,7 +177,7 @@ public class PerifiosBankStatementServiceImpl implements
 		bsinitiate.setNameMatch(initiateRequestPojo.isNameMatch());
 		bsinitiate.setPennyDropVerification(initiateRequestPojo.isPennyDropVerification());
 
-		String payload = createPayload(initiateRequestPojo.getProcessId(), initiateRequestPojo);
+		String payload = createPayload(bsinitiate.getProcessId(), initiateRequestPojo);
 		JSONObject json = new JSONObject(payload);
 		String actualPayload = XML.toString(json);
 		bsinitiate.setRequest(actualPayload);
