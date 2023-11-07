@@ -204,7 +204,6 @@ public class PerifiosBankStatementServiceImpl implements
 
 	@Override
 	public ResponseEntity<?> transactionStatus(BankStatementInitiate bsinitiate) throws Exception {
-
 		TransactionStatusPojo transactionStatusPojo = new TransactionStatusPojo();
 		try {
 			InitiateRequestPojo initiateRequestPojo = new InitiateRequestPojo();

@@ -16,9 +16,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.bankstatement.analysis.base.datamodel.BankStatementBaseModel.STATUS;
+import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.datamodel.BankStatementReport;
 import com.bankstatement.analysis.base.datamodel.BankStatementTransaction;
 import com.bankstatement.analysis.base.service.BankStatementImpl;
+import com.bankstatement.analysis.base.service.FeatureService;
 import com.bankstatement.analysis.base.service.ProductService;
 import com.bankstatement.analysis.perfios.response.pojo.Part;
 import com.bankstatement.analysis.perfios.response.pojo.TransactionStatusResponse;
@@ -31,6 +33,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class AsyncBankStatementService {
 
 	private static final Logger logger = LoggerFactory.getLogger(AsyncBankStatementService.class);
+
+	@Autowired
+	FeatureService featureService;
 
 	@Autowired
 	BankStatementImpl bankStatementImpl;
@@ -100,8 +105,12 @@ public class AsyncBankStatementService {
 				bankStatementReport.setStatus(STATUS.COMPLETED);
 
 				bankStatementImpl.saveBankStatementReport(bankStatementReport);
+				BankStatementInitiate bankStatementInitiate = bankStatementImpl
+						.getBankStatementInitiateByProcessId(bankStatementTransaction.getProcessId());
+
+				featureService.constructFeature(responseBody, bankStatementInitiate);
 			}
- 
+
 		} catch (Exception e) {
 			logger.error("Error while report initiate ", e);
 			throw new Exception();
