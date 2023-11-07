@@ -1,6 +1,6 @@
 package com.bankstatement.analysis.base.service;
 
-import java.util.ArrayList;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -18,10 +18,10 @@ import com.bankstatement.analysis.base.datamodel.ApplicationDetail.APPLICATION_S
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.datamodel.BankTransactionDetails;
 import com.bankstatement.analysis.base.datamodel.BankTransactionDetails.CATEGORY_TYPE;
+import com.bankstatement.analysis.base.helper.FeatureHelper;
 import com.bankstatement.analysis.base.repo.ApplicationDetailRepository;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
 import com.bankstatement.analysis.transaction.pojo.BankAccountDetails;
-import com.bankstatement.analysis.transaction.pojo.TransactionDetails;
 import com.bankstatement.analysis.transaction.pojo.Xn;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -39,6 +39,8 @@ public class FeatureService {
 
 	@Autowired
 	BankStatementImpl bankStatementImpl;
+
+	ObjectMapper objectMapper = new ObjectMapper();
 
 	@Async
 	public void saveApplicationDetails(InitiateRequestPojo initiate) {
@@ -59,7 +61,7 @@ public class FeatureService {
 
 	@Async
 	public void constructFeature(String responseBody, BankStatementInitiate initiate)
-			throws JsonMappingException, JsonProcessingException {
+			throws JsonMappingException, JsonProcessingException, ParseException {
 		ApplicationDetail applicationDetail = applicationDetailRepository
 				.findByApplicationReferenceNo(initiate.getApplicationReferenceNo());
 
@@ -69,7 +71,6 @@ public class FeatureService {
 			applicationDetail.setApplicationDate(initiate.getApplicationDate());
 		}
 
-		ObjectMapper objectMapper = new ObjectMapper();
 		JsonNode jsonNode = objectMapper.readTree(responseBody);
 
 		JsonNode accountDetails = jsonNode.get("accountXns");
@@ -101,15 +102,11 @@ public class FeatureService {
 					details.setCategoryType(CATEGORY_TYPE.INFLOW);
 				}
 
-				if (CATEGORY_TYPE.OUTFLOW == details.getCategoryType()) {
-					if ("Transfer To".contains(d.getCategory().toUpperCase())) {
-						details.setCategory("Transfer out");
-					} else if ("Transfer To".contains(d.getCategory().toUpperCase())) {
-						details.setCategory("Transfer in");
-					}
-				}
-
-				if (StringUtils.isEmpty(details.getCategory())) {
+				if (d.getCategory().toUpperCase().contains("Transfer To".toUpperCase())) {
+					details.setCategory("Transfer out");
+				} else if (d.getCategory().toUpperCase().contains("Transfer From".toUpperCase())) {
+					details.setCategory("Transfer in");
+				} else {
 					details.setCategory(d.getCategory());
 				}
 
@@ -119,6 +116,32 @@ public class FeatureService {
 		}
 
 		applicationDetailRepository.save(applicationDetail);
+		helper(applicationDetail);
+	}
+
+	public void helper(ApplicationDetail applicationDetail)
+			throws ParseException, JsonMappingException, JsonProcessingException {
+
+		FeatureHelper helper = new FeatureHelper(applicationDetail);
+
+		applicationDetail.setResponse(objectMapper.writeValueAsString(helper));
+		if (StringUtils.isNotEmpty(applicationDetail.getResponse())) {
+			applicationDetail.setStatus(APPLICATION_STATUS.COMPLETED);
+			applicationDetailRepository.save(applicationDetail);
+		}
+
+	}
+	
+	public void extr(String appln) throws ParseException, JsonProcessingException {
+		ApplicationDetail applicationDetail = applicationDetailRepository
+				.findByApplicationReferenceNo(appln);
+		FeatureHelper helper = new FeatureHelper(applicationDetail);
+		
+		applicationDetail.setResponse(objectMapper.writeValueAsString(helper));
+		if (StringUtils.isNotEmpty(applicationDetail.getResponse())) {
+			applicationDetail.setStatus(APPLICATION_STATUS.COMPLETED);
+			applicationDetailRepository.save(applicationDetail);
+		}
 	}
 
 	public ResponseEntity<?> deleteInitiatedRequest(String processId) throws Exception {
@@ -151,6 +174,17 @@ public class FeatureService {
 		}
 		details.put("message", "Deleted successfully");
 		return ResponseEntity.ok(details);
+	}
+
+	public ResponseEntity<?> fetchfeatureResponse(String applicationReferenceNo) {
+		ApplicationDetail applicationDetail = applicationDetailRepository
+				.findByApplicationReferenceNo(applicationReferenceNo);
+		if (applicationDetail != null && APPLICATION_STATUS.COMPLETED == applicationDetail.getStatus()) {
+			return ResponseEntity.ok(applicationDetail.getResponse());
+		}
+
+		return null;
+
 	}
 
 }

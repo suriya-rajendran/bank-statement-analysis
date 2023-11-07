@@ -109,7 +109,7 @@ public class AsyncBankStatementService {
 							.getBankStatementInitiateByProcessId(bankStatementTransaction.getProcessId());
 
 					featureService.constructFeature(responseBody, bankStatementInitiate);
-				}
+				} 
 			}
 		} catch (Exception e) {
 			logger.error("Error while report initiate ", e);

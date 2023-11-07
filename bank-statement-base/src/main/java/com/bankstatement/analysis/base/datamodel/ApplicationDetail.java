@@ -18,6 +18,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.util.CollectionUtils;
 
 import com.bankstatement.analysis.base.datamodel.BankStatementBaseModel.STATUS;
@@ -30,6 +31,7 @@ import lombok.Setter;
 @Data
 @Entity
 @Table(name = "application_detail")
+@DynamicUpdate
 public class ApplicationDetail implements Serializable {
 
 	/**

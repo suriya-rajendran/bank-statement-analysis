@@ -13,6 +13,8 @@ import javax.persistence.Id;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.DynamicUpdate;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -25,6 +27,7 @@ import lombok.Setter;
 @Entity
 @EqualsAndHashCode(callSuper = false)
 @Table(name = "bank_transaction_details")
+@DynamicUpdate
 public class BankTransactionDetails implements Serializable {
 
 	/**

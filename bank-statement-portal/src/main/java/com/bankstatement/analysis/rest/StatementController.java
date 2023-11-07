@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.datamodel.BankStatementReport;
 import com.bankstatement.analysis.base.datamodel.BankStatementTransaction;
+import com.bankstatement.analysis.base.datamodel.BankStatementBaseModel.STATUS;
 import com.bankstatement.analysis.base.service.BankStatementImpl;
 import com.bankstatement.analysis.base.service.FeatureService;
 import com.bankstatement.analysis.request.pojo.CustomException;
@@ -74,9 +75,14 @@ public class StatementController {
 			BankStatementTransaction bankStatementTransaction = bankStatementImpl
 					.getBankStatementTransactionByProcessId(processId);
 			if (bankStatementTransaction != null) {
-				if ("Perifios".equalsIgnoreCase(bankStatementTransaction.getProcessType())) {
-					return perifiosBankStatementServiceImpl.initiateReport(bankStatementTransaction);
+				if (STATUS.COMPLETED == bankStatementTransaction.getStatus()) {
 
+					if ("Perifios".equalsIgnoreCase(bankStatementTransaction.getProcessType())) {
+						return perifiosBankStatementServiceImpl.initiateReport(bankStatementTransaction);
+					}
+
+				} else {
+					throw new CustomException("400", "Transaction is pending");
 				}
 			}
 		}
@@ -112,7 +118,23 @@ public class StatementController {
 
 	}
 
+	@GetMapping("/fetch/feature-detail")
+	public ResponseEntity<?> fetchfeatureResponse(
+			@RequestParam(value = "application_ref_no") String applicationReferenceNo) throws Exception {
+		if (StringUtils.isNotEmpty(applicationReferenceNo)) {
+			return featureService.fetchfeatureResponse(applicationReferenceNo);
+		}
+		throw new CustomException("400", "Application number cannot be empty");
+
+	}
+
 	private String getProductCode(HttpServletRequest request) {
 		return (String) request.getAttribute("product_code");
+	}
+
+	@PostMapping("/int")
+	public void extr(@RequestParam(value = "process_id") String processId) throws Exception {
+		featureService.extr(processId);
+
 	}
 }
