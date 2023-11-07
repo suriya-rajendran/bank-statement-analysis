@@ -77,40 +77,40 @@ public class AsyncBankStatementService {
 
 			TransactionStatusResponse transactionStatusResponse = objectMapper
 					.readValue(bankStatementTransaction.getResponse(), TransactionStatusResponse.class);
-			Part vo = transactionStatusResponse.getStatus().getPart();
-			BankStatementReport bankStatementReport = bankStatementImpl.getBSReportByProcessIdAndTransactionId(
-					bankStatementTransaction.getProcessId(), vo.getPerfiosTransactionId());
+			for (Part vo : transactionStatusResponse.getStatus().getPart()) {
+				BankStatementReport bankStatementReport = bankStatementImpl.getBSReportByProcessIdAndTransactionId(
+						bankStatementTransaction.getProcessId(), vo.getPerfiosTransactionId());
 
-			if (bankStatementReport == null) {
-				bankStatementReport = new BankStatementReport();
-				bankStatementReport.setCustomProcessId(bankStatementTransaction.getProcessId());
-				bankStatementReport.setTransactionId(vo.getPerfiosTransactionId());
-				bankStatementReport.setProcessType(bankStatementTransaction.getProcessType());
+				if (bankStatementReport == null) {
+					bankStatementReport = new BankStatementReport();
+					bankStatementReport.setCustomProcessId(bankStatementTransaction.getProcessId());
+					bankStatementReport.setTransactionId(vo.getPerfiosTransactionId());
+					bankStatementReport.setProcessType(bankStatementTransaction.getProcessType());
+				}
+
+				if (STATUS.COMPLETED != bankStatementReport.getStatus()) {
+
+					String payload = createRetrieveReportPayload(bankStatementReport.getTransactionId(),
+							bankStatementTransaction.getProcessId(), null);
+					JSONObject json = new JSONObject(payload);
+					String actualPayload = XML.toString(json);
+					HttpResponse httpResponse = perfiosHelper.executeRequest(HttpPost.class,
+							perfiosConfiguration.getRetrieveReportUrl(), actualPayload,
+							"application/x-www-form-urlencoded", null, null);
+					String responseBody = EntityUtils.toString(httpResponse.getEntity());
+					logger.debug("response for {} - {}", bankStatementTransaction.getProcessId(), responseBody);
+
+					bankStatementReport.setResponseCode(String.valueOf(httpResponse.getStatusLine().getStatusCode()));
+					bankStatementReport.setResponse(responseBody);
+					bankStatementReport.setStatus(STATUS.COMPLETED);
+
+					bankStatementImpl.saveBankStatementReport(bankStatementReport);
+					BankStatementInitiate bankStatementInitiate = bankStatementImpl
+							.getBankStatementInitiateByProcessId(bankStatementTransaction.getProcessId());
+
+					featureService.constructFeature(responseBody, bankStatementInitiate);
+				}
 			}
-
-			if (STATUS.COMPLETED != bankStatementReport.getStatus()) {
-
-				String payload = createRetrieveReportPayload(bankStatementReport.getTransactionId(),
-						bankStatementTransaction.getProcessId(), null);
-				JSONObject json = new JSONObject(payload);
-				String actualPayload = XML.toString(json);
-				HttpResponse httpResponse = perfiosHelper.executeRequest(HttpPost.class,
-						perfiosConfiguration.getRetrieveReportUrl(), actualPayload, "application/x-www-form-urlencoded",
-						null, null);
-				String responseBody = EntityUtils.toString(httpResponse.getEntity());
-				logger.debug("response for {} - {}", bankStatementTransaction.getProcessId(), responseBody);
-
-				bankStatementReport.setResponseCode(String.valueOf(httpResponse.getStatusLine().getStatusCode()));
-				bankStatementReport.setResponse(responseBody);
-				bankStatementReport.setStatus(STATUS.COMPLETED);
-
-				bankStatementImpl.saveBankStatementReport(bankStatementReport);
-				BankStatementInitiate bankStatementInitiate = bankStatementImpl
-						.getBankStatementInitiateByProcessId(bankStatementTransaction.getProcessId());
-
-				featureService.constructFeature(responseBody, bankStatementInitiate);
-			}
-
 		} catch (Exception e) {
 			logger.error("Error while report initiate ", e);
 			throw new Exception();

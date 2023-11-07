@@ -22,7 +22,7 @@ public class Status implements Serializable {
 	public String processing;
 	public String files;
 	@JsonProperty("Part")
-	public Part part;
+	public Part[] part;
 
 //	public List<Part> partList;
 //

@@ -11,4 +11,7 @@ public interface BSReportRepository extends JpaRepository<BankStatementReport, L
 	BankStatementReport findByProcessIdAndTransactionId(String processId, String transactionId);
 
 	List<BankStatementReport> findByProcessId(String processId);
+
+	void deleteByProcessId(String processId);
+
 }

@@ -18,6 +18,7 @@ import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.datamodel.BankStatementReport;
 import com.bankstatement.analysis.base.datamodel.BankStatementTransaction;
 import com.bankstatement.analysis.base.service.BankStatementImpl;
+import com.bankstatement.analysis.base.service.FeatureService;
 import com.bankstatement.analysis.request.pojo.CustomException;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
 import com.bankstatement.perfios.impl.PerifiosBankStatementServiceImpl;
@@ -32,12 +33,16 @@ public class StatementController {
 	@Autowired
 	BankStatementImpl bankStatementImpl;
 
+	@Autowired
+	FeatureService featureService;
+
 	public final static Logger logger = LoggerFactory.getLogger(StatementController.class);
 
 	@PostMapping("/initate-statement")
 	public ResponseEntity<?> processStatement(HttpServletRequest request,
 			@RequestBody InitiateRequestPojo initiateRequestPojo) throws Exception {
 		if (StringUtils.isNotEmpty(initiateRequestPojo.getProcessType())) {
+			featureService.saveApplicationDetails(initiateRequestPojo);
 			if ("Perifios".equalsIgnoreCase(initiateRequestPojo.getProcessType())) {
 				return perifiosBankStatementServiceImpl.initiateTransaction(initiateRequestPojo,
 						getProductCode(request));
@@ -90,6 +95,18 @@ public class StatementController {
 					return perifiosBankStatementServiceImpl.reportLink(bankStatementReport);
 				}
 			}
+		}
+		throw new CustomException("400", "Invalid ProcessId type");
+
+	}
+
+	@PostMapping("/delete-initate-statement")
+	public ResponseEntity<?> deleteInitiatedRequest(@RequestParam(value = "process_id") String processId)
+			throws Exception {
+		if (StringUtils.isNotEmpty(processId)) {
+
+			return featureService.deleteInitiatedRequest(processId);
+
 		}
 		throw new CustomException("400", "Invalid ProcessId type");
 

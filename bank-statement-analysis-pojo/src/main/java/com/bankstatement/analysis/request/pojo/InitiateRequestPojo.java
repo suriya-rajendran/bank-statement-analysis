@@ -19,6 +19,10 @@ public class InitiateRequestPojo implements Serializable {
 	private String processType;
 
 	private String yearMonthFrom;
+	
+	private String applicationReferenceNo;
+
+	private String applicationDate;
 
 	private String yearMonthTo;
 

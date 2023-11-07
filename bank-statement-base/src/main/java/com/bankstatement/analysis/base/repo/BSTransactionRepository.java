@@ -8,4 +8,6 @@ public interface BSTransactionRepository extends JpaRepository<BankStatementTran
 
 	BankStatementTransaction findByProcessId(String processId);
 
+	void deleteByProcessId(String processId);
+
 }
