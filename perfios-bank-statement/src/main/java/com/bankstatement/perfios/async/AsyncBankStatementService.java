@@ -105,11 +105,21 @@ public class AsyncBankStatementService {
 					bankStatementReport.setStatus(STATUS.COMPLETED);
 
 					bankStatementImpl.saveBankStatementReport(bankStatementReport);
+					if (STATUS.COMPLETED == bankStatementReport.getStatus()) {
+
+						BankStatementInitiate bankStatementInitiate = bankStatementImpl
+								.getBankStatementInitiateByProcessId(bankStatementTransaction.getProcessId());
+
+						featureService.constructFeature(bankStatementReport.getResponse(), bankStatementInitiate);
+					}
+				} else {
 					BankStatementInitiate bankStatementInitiate = bankStatementImpl
 							.getBankStatementInitiateByProcessId(bankStatementTransaction.getProcessId());
 
-					featureService.constructFeature(responseBody, bankStatementInitiate);
-				} 
+					featureService.reTrigger(bankStatementReport.getResponse(), bankStatementInitiate);
+
+				}
+
 			}
 		} catch (Exception e) {
 			logger.error("Error while report initiate ", e);

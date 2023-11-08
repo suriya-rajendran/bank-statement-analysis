@@ -128,8 +128,7 @@ public class PerifiosBankStatementServiceImpl implements
 								productCode.toUpperCase() + "-" + perfiosConfiguration.getVendorCode() + "-");
 						bsinitiate.setApplicationReferenceNo(initiateRequestPojo.getApplicationReferenceNo()); 
 						valid = true;
-					}
-					featureService.saveApplicationDetails(initiateRequestPojo);
+					} 
 					bsinitiate.setApplicationDate(initiateRequestPojo.getApplicationDate());
 					String actualPayload = generateInitiateRequest(initiateRequestPojo, productCode, bsinitiate);
 

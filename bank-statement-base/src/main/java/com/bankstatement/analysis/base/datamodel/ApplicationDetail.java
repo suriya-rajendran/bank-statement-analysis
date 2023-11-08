@@ -43,7 +43,7 @@ public class ApplicationDetail implements Serializable {
 	@Column(name = "id")
 	private Long id;
 
-	@Column(name = "application_ref_no")
+	@Column(name = "application_ref_no",unique = true)
 	private String applicationReferenceNo;
 
 	@Column(name = "application_date")

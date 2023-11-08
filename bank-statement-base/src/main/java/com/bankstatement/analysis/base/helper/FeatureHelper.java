@@ -74,7 +74,7 @@ public class FeatureHelper implements Serializable {
 		sdf = new SimpleDateFormat("yyyy-MM-dd");
 
 		this.bankTransaction = applicationDetail.getTransactionDetails();
-		this.bankTransactionBy12Month = bankTransactionByMonth(bankTransaction, 12, new Date());
+		this.bankTransactionBy12Month = bankTransactionByMonth(bankTransaction, 1, new Date());
 //		this.bankTransactionBy3Month = bankTransactionByMonth(bankTransaction, 3, new Date());
 		this.bankTransactionBy3MonthFromApplicationDate = bankTransactionByMonth(bankTransaction, 3,
 				sdf.parse(applicationDetail.getApplicationDate()));
@@ -84,6 +84,9 @@ public class FeatureHelper implements Serializable {
 		setTotalAmountCash12Month();
 		setAverageMonthlyCashout();
 		setNoPurchaseByCard12Month();
+		setTotalAmountCashOut3Month();
+		setTotalNegativeCharge3Month();
+		setStdDevMonthlyCashin();
 
 	}
 
@@ -192,10 +195,9 @@ public class FeatureHelper implements Serializable {
 
 	// Function to find standard
 	// deviation of given array.
-	st
 
 	@JsonIgnore
-	publicatic double standardDeviation(double arr[], int n) {
+	public double standardDeviation(double arr[], int n) {
 		double sum = 0;
 
 		for (int i = 0; i < n; i++)

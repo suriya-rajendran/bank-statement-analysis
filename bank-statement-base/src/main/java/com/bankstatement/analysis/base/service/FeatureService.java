@@ -120,6 +120,14 @@ public class FeatureService {
 		helper(applicationDetail);
 	}
 
+	public void reTrigger(String responseBody, BankStatementInitiate initiate)
+			throws JsonMappingException, JsonProcessingException, ParseException {
+		ApplicationDetail applicationDetail = applicationDetailRepository
+				.findByApplicationReferenceNo(initiate.getApplicationReferenceNo());
+		helper(applicationDetail);
+
+	}
+
 	public void helper(ApplicationDetail applicationDetail)
 			throws ParseException, JsonMappingException, JsonProcessingException {
 		if (!CollectionUtils.isEmpty(applicationDetail.getTransactionDetails())) {
