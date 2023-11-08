@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -74,9 +75,16 @@ public class FeatureHelper implements Serializable {
 
 		this.bankTransaction = applicationDetail.getTransactionDetails();
 		this.bankTransactionBy12Month = bankTransactionByMonth(bankTransaction, 12, new Date());
-		this.bankTransactionBy3Month = bankTransactionByMonth(bankTransaction, 3, new Date());
+//		this.bankTransactionBy3Month = bankTransactionByMonth(bankTransaction, 3, new Date());
 		this.bankTransactionBy3MonthFromApplicationDate = bankTransactionByMonth(bankTransaction, 3,
 				sdf.parse(applicationDetail.getApplicationDate()));
+		setNetInterest12Month();
+		setTotalInterest12Month();
+		setNoOfBounceIwEcsCharge3Months();
+		setTotalAmountCash12Month();
+		setAverageMonthlyCashout();
+		setNoPurchaseByCard12Month();
+
 	}
 
 	@JsonIgnore
@@ -85,8 +93,8 @@ public class FeatureHelper implements Serializable {
 	@JsonIgnore
 	private final List<BankTransactionDetails> bankTransactionBy12Month;
 
-	@JsonIgnore
-	private final List<BankTransactionDetails> bankTransactionBy3Month;
+//	@JsonIgnore
+//	private final List<BankTransactionDetails> bankTransactionBy3Month;
 
 	@JsonIgnore
 	private final List<BankTransactionDetails> bankTransactionBy3MonthFromApplicationDate;
@@ -152,6 +160,57 @@ public class FeatureHelper implements Serializable {
 	}
 
 	@JsonIgnore
+	public double calculateStandardDeviation(List<Double> values) {
+
+		// get the sum of array
+		double sum = 0.0;
+		for (double i : values) {
+			sum += i;
+		}
+
+		// get the mean of array
+		int length = values.size();
+		double mean = sum / length;
+
+		// calculate the standard deviation
+		double standardDeviation = 0.0;
+		for (double num : values) {
+			standardDeviation += Math.pow(num - mean, 2);
+		}
+
+		return Math.sqrt(standardDeviation / length);
+	}
+
+	@JsonIgnore
+	public double mean(double arr[], int n) {
+		double sum = 0;
+
+		for (int i = 0; i < n; i++)
+			sum = sum + arr[i];
+		return sum / n;
+	}
+
+	// Function to find standard
+	// deviation of given array.
+	st
+
+	@JsonIgnore
+	publicatic double standardDeviation(double arr[], int n) {
+		double sum = 0;
+
+		for (int i = 0; i < n; i++)
+			sum = sum + (arr[i] - mean(arr, n)) * (arr[i] - mean(arr, n));
+
+		return Math.sqrt(sum / (n - 1));
+	}
+
+	// Function to find coefficient of variation.
+	@JsonIgnore
+	public double coefficientOfVariation(double arr[], int n) {
+		return (standardDeviation(arr, n) / mean(arr, n));
+	}
+
+	@JsonIgnore
 	public HashMap<String, Integer> getMonthlyTransactionCount(List<BankTransactionDetails> transactions,
 			CATEGORY_TYPE type, List<String> category) throws ParseException {
 
@@ -184,8 +243,8 @@ public class FeatureHelper implements Serializable {
 	@JsonProperty("net_interest_12m")
 	public double netInterest12Month;
 
-	public double getNetInterest12Month() {
-		return this.netInterest12Month = bankTransactionBy12Month.stream()
+	public void setNetInterest12Month() {
+		this.netInterest12Month = bankTransactionBy12Month.stream()
 				.filter(d -> d.getCategory().toUpperCase().contains("Interest".toUpperCase())
 						|| d.getCategory().toUpperCase().contains("Interest Charges".toUpperCase()))
 				.mapToDouble(BankTransactionDetails::getAmount).sum();
@@ -195,28 +254,27 @@ public class FeatureHelper implements Serializable {
 	@JsonProperty("total_interest_earned_12m")
 	public double totalInterest12Month;
 
-	public double getTotalInterest12Month() {
-		return this.totalInterest12Month = bankTransactionBy12Month.stream()
+	public void setTotalInterest12Month() {
+		this.totalInterest12Month = bankTransactionBy12Month.stream()
 				.filter(d -> d.getCategory().toUpperCase().contains("Interest".toUpperCase()))
 				.mapToDouble(BankTransactionDetails::getAmount).sum();
 
 	}
 
 	@JsonProperty("num_O_Bounced_IW_ECS_Charges_3m")
-	public double noOfBounceIwEcsCharge3Months;
+	public long noOfBounceIwEcsCharge3Months;
 
-	public double getNoOfBounceIwEcsCharge3Months() {
-		return this.noOfBounceIwEcsCharge3Months = bankTransactionBy3MonthFromApplicationDate.stream()
-				.filter(d -> d.getCategory().toUpperCase().contains("Bounced I/W ECS".toUpperCase()))
-				.mapToDouble(BankTransactionDetails::getAmount).sum();
+	public void setNoOfBounceIwEcsCharge3Months() {
+		this.noOfBounceIwEcsCharge3Months = bankTransactionBy3MonthFromApplicationDate.stream()
+				.filter(d -> d.getCategory().toUpperCase().contains("Bounced I/W ECS".toUpperCase())).count();
 
 	}
 
 	@JsonProperty("total_amt_cash_in_12m")
 	public double totalAmountCash12Month;
 
-	public double getTotalAmountCash12Month() {
-		return this.totalAmountCash12Month = bankTransactionBy12Month.stream()
+	public void setTotalAmountCash12Month() {
+		this.totalAmountCash12Month = bankTransactionBy12Month.stream()
 				.filter(d -> CATEGORY_TYPE.INFLOW == d.getCategoryType()).mapToDouble(BankTransactionDetails::getAmount)
 				.sum();
 
@@ -225,10 +283,57 @@ public class FeatureHelper implements Serializable {
 	@JsonProperty("avg_monthly_cashout")
 	public double averageMonthlyCashout;
 
-	public double getAverageMonthlyCashout() throws ParseException {
-		return this.averageMonthlyCashout = getAverageAmountMonthlyBasedOnType(bankTransaction, CATEGORY_TYPE.OUTFLOW,
+	public void setAverageMonthlyCashout() throws ParseException {
+		this.averageMonthlyCashout = getAverageAmountMonthlyBasedOnType(bankTransactionBy12Month, CATEGORY_TYPE.OUTFLOW,
 				null);
 
+	}
+
+	@JsonProperty("num_purchase_by_card_12m")
+	public long noPurchaseByCard12Month;
+
+	public void setNoPurchaseByCard12Month() throws ParseException {
+		this.noPurchaseByCard12Month = bankTransactionBy12Month.stream()
+				.filter(d -> CATEGORY_TYPE.OUTFLOW == d.getCategoryType()
+						&& d.getCategory().equalsIgnoreCase("Purchase by Card"))
+				.count();
+
+	}
+
+	@JsonProperty("total_amt_cash_out_3m")
+	public double totalAmountCashOut3Month;
+
+	public void setTotalAmountCashOut3Month() throws ParseException {
+		this.totalAmountCashOut3Month = bankTransactionBy3MonthFromApplicationDate.stream()
+				.filter(d -> CATEGORY_TYPE.OUTFLOW == d.getCategoryType())
+				.mapToDouble(BankTransactionDetails::getAmount).sum();
+	}
+
+//	Category1' = 'Outflow'
+//	and
+//	 'Category2' in ('Below Min Balance','Bounced I/W ECS Charges','Bounced IW Cheque charges', 'Penal Charges')
+
+	@JsonProperty("total_negative_charge_amt_3m")
+	public double totalNegativeCharge3Month;
+
+	public void setTotalNegativeCharge3Month() throws ParseException {
+		this.totalNegativeCharge3Month = bankTransactionBy3MonthFromApplicationDate.stream()
+				.filter(d -> CATEGORY_TYPE.OUTFLOW == d.getCategoryType()
+						&& Arrays.asList("Below Min Balance", "Bounced I/W ECS Charges", "Bounced IW Cheque charges",
+								"Penal Charges").contains(d.getCategory()))
+				.mapToDouble(BankTransactionDetails::getAmount).sum();
+	}
+
+	@JsonProperty("std_dev_monthly_cashin")
+	public double stdDevMonthlyCashin;
+
+	public void setStdDevMonthlyCashin() throws ParseException {
+
+		HashMap<String, Double> totalAmountMonthly = getTotalAmountMonthly(bankTransactionBy12Month,
+				CATEGORY_TYPE.INFLOW, null);
+		List<Double> values = new ArrayList<>(totalAmountMonthly.values());
+
+		this.stdDevMonthlyCashin = calculateStandardDeviation(values);
 	}
 
 }

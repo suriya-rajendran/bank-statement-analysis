@@ -31,7 +31,6 @@ import lombok.Setter;
 @Data
 @Entity
 @Table(name = "application_detail")
-@DynamicUpdate
 public class ApplicationDetail implements Serializable {
 
 	/**

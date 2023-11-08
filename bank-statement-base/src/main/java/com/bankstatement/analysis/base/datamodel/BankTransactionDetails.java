@@ -27,7 +27,6 @@ import lombok.Setter;
 @Entity
 @EqualsAndHashCode(callSuper = false)
 @Table(name = "bank_transaction_details")
-@DynamicUpdate
 public class BankTransactionDetails implements Serializable {
 
 	/**

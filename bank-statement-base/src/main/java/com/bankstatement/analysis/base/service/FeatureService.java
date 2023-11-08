@@ -113,6 +113,7 @@ public class FeatureService {
 				applicationDetail.addFlowDetails(details);
 
 			}
+			logger.info("{}", applicationDetail.getTransactionDetails());
 		}
 
 		applicationDetailRepository.save(applicationDetail);
@@ -121,26 +122,28 @@ public class FeatureService {
 
 	public void helper(ApplicationDetail applicationDetail)
 			throws ParseException, JsonMappingException, JsonProcessingException {
+		if (!CollectionUtils.isEmpty(applicationDetail.getTransactionDetails())) {
 
-		FeatureHelper helper = new FeatureHelper(applicationDetail);
+			FeatureHelper helper = new FeatureHelper(applicationDetail);
 
-		applicationDetail.setResponse(objectMapper.writeValueAsString(helper));
-		if (StringUtils.isNotEmpty(applicationDetail.getResponse())) {
-			applicationDetail.setStatus(APPLICATION_STATUS.COMPLETED);
-			applicationDetailRepository.save(applicationDetail);
+			applicationDetail.setResponse(objectMapper.writeValueAsString(helper));
+			if (StringUtils.isNotEmpty(applicationDetail.getResponse())) {
+				applicationDetail.setStatus(APPLICATION_STATUS.COMPLETED);
+				applicationDetailRepository.save(applicationDetail);
+			}
 		}
-
 	}
-	
+
 	public void extr(String appln) throws ParseException, JsonProcessingException {
-		ApplicationDetail applicationDetail = applicationDetailRepository
-				.findByApplicationReferenceNo(appln);
-		FeatureHelper helper = new FeatureHelper(applicationDetail);
-		
-		applicationDetail.setResponse(objectMapper.writeValueAsString(helper));
-		if (StringUtils.isNotEmpty(applicationDetail.getResponse())) {
-			applicationDetail.setStatus(APPLICATION_STATUS.COMPLETED);
-			applicationDetailRepository.save(applicationDetail);
+		ApplicationDetail applicationDetail = applicationDetailRepository.findByApplicationReferenceNo(appln);
+		if (!CollectionUtils.isEmpty(applicationDetail.getTransactionDetails())) {
+			FeatureHelper helper = new FeatureHelper(applicationDetail);
+
+			applicationDetail.setResponse(objectMapper.writeValueAsString(helper));
+			if (StringUtils.isNotEmpty(applicationDetail.getResponse())) {
+				applicationDetail.setStatus(APPLICATION_STATUS.COMPLETED);
+				applicationDetailRepository.save(applicationDetail);
+			}
 		}
 	}
 

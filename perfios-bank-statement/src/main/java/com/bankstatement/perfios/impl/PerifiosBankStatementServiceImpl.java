@@ -61,6 +61,9 @@ public class PerifiosBankStatementServiceImpl implements
 	ProductService productService;
 
 	@Autowired
+	FeatureService featureService;
+
+	@Autowired
 	AsyncBankStatementService asyncBankStatementService;
 
 	public final static Logger logger = LoggerFactory.getLogger(PerifiosBankStatementServiceImpl.class);
@@ -123,8 +126,11 @@ public class PerifiosBankStatementServiceImpl implements
 						bsinitiate.setProcessType(initiateRequestPojo.getProcessType());
 						bsinitiate.setProcessId(
 								productCode.toUpperCase() + "-" + perfiosConfiguration.getVendorCode() + "-");
+						bsinitiate.setApplicationReferenceNo(initiateRequestPojo.getApplicationReferenceNo()); 
 						valid = true;
 					}
+					featureService.saveApplicationDetails(initiateRequestPojo);
+					bsinitiate.setApplicationDate(initiateRequestPojo.getApplicationDate());
 					String actualPayload = generateInitiateRequest(initiateRequestPojo, productCode, bsinitiate);
 
 					generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
