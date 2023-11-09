@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.datamodel.BankStatementReport;
@@ -37,7 +38,7 @@ public class BankStatementImpl {
 	public final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
 	public Map<String, String> fetchBankStatementRecords(Integer days, String productCode) {
-		Pageable limit = PageRequest.of(0,days);
+		Pageable limit = PageRequest.of(0, days);
 		return convertObjectToMap(bsInitiateRepository.findByRequestDate(productCode, new Date(), limit));
 
 	}
@@ -53,7 +54,7 @@ public class BankStatementImpl {
 
 	}
 
-	@Transactional
+	@org.springframework.transaction.annotation.Transactional(propagation = Propagation.REQUIRED, readOnly = false)
 	public BankStatementInitiate saveBankStatementInitiate(BankStatementInitiate bankStatementInitiate)
 			throws Exception {
 		try {
@@ -86,7 +87,7 @@ public class BankStatementImpl {
 
 	}
 
-	@Transactional
+	@org.springframework.transaction.annotation.Transactional(propagation = Propagation.REQUIRED, readOnly = false)
 	public BankStatementTransaction saveBankStatementTransaction(BankStatementTransaction bankStatementTransaction)
 			throws Exception {
 		try {
@@ -108,7 +109,7 @@ public class BankStatementImpl {
 
 	}
 
-	@Transactional
+	@org.springframework.transaction.annotation.Transactional(propagation = Propagation.REQUIRED, readOnly = false)
 	public BankStatementReport saveBankStatementReport(BankStatementReport bankStatementReport) throws Exception {
 		try {
 			return bsReportRepository.saveAndFlush(bankStatementReport);

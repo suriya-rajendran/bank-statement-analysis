@@ -126,13 +126,15 @@ public class PerifiosBankStatementServiceImpl implements
 						bsinitiate.setProcessType(initiateRequestPojo.getProcessType());
 						bsinitiate.setProcessId(
 								productCode.toUpperCase() + "-" + perfiosConfiguration.getVendorCode() + "-");
-						bsinitiate.setApplicationReferenceNo(initiateRequestPojo.getApplicationReferenceNo()); 
+						bsinitiate.setApplicationReferenceNo(initiateRequestPojo.getApplicationReferenceNo());
 						valid = true;
-					} 
-					bsinitiate.setApplicationDate(initiateRequestPojo.getApplicationDate());
-					String actualPayload = generateInitiateRequest(initiateRequestPojo, productCode, bsinitiate);
+					}
+					if (STATUS.COMPLETED != bsinitiate.getStatus() && valid) {
+						bsinitiate.setApplicationDate(initiateRequestPojo.getApplicationDate());
+						String actualPayload = generateInitiateRequest(initiateRequestPojo, productCode, bsinitiate);
 
-					generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
+						generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
+					}
 					if (STATUS.COMPLETED == bsinitiate.getStatus() && valid) {
 						productService.updateValidityCount(productCode);
 					}

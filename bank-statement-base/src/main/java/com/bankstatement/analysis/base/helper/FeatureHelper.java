@@ -3,9 +3,11 @@ package com.bankstatement.analysis.base.helper;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -43,28 +45,22 @@ public class FeatureHelper implements Serializable {
 				e.printStackTrace();
 			}
 		}
-		return bankTransaction;
+		return monthsTransactions;
 	}
 
 	@JsonIgnore
 	private boolean isWithinLastMonths(Date transactionDate, Date currentDate, Integer months) {
 		// Get calendar objects for transaction and current dates
-		Calendar transactionCalendar = Calendar.getInstance();
-		transactionCalendar.setTime(transactionDate);
-		Calendar currentCalendar = Calendar.getInstance();
-		currentCalendar.setTime(currentDate);
+		LocalDate localDate1 = transactionDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		LocalDate localDate2 = currentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
-		// Compare years and months
-		int transactionYear = transactionCalendar.get(Calendar.YEAR);
-		int transactionMonth = transactionCalendar.get(Calendar.MONTH);
-		int currentYear = currentCalendar.get(Calendar.YEAR);
-		int currentMonth = currentCalendar.get(Calendar.MONTH);
+		// Calculate the period between the two dates
+		Period period = Period.between(localDate1, localDate2);
 
-		// Check if the transaction date is within the last 12 months
-		if (currentYear - transactionYear == 1) {
-			return currentMonth >= transactionMonth;
-		} else if (currentYear - transactionYear == 0) {
-			return currentMonth - transactionMonth <= months && currentMonth - transactionMonth >= 0;
+		// Extract the number of months from the period
+		int monthsDifference = period.getYears() * 12 + period.getMonths();
+		if (monthsDifference == months) {
+			return true;
 		}
 		return false;
 	}
