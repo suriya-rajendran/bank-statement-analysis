@@ -28,8 +28,40 @@ public class FeatureBaseHelper implements Serializable {
 
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-	public FeatureBaseHelper(List<BankTransactionDetails> bankTransactionBy12Month) {
-		// TODO Auto-generated constructor stub
+	@JsonIgnore
+	private final List<BankTransactionDetails> bankTransaction;
+
+	public FeatureBaseHelper(List<BankTransactionDetails> bankTransaction) throws ParseException {
+		this.bankTransaction = bankTransaction;
+		setNetInterestMonth();
+		setTotalInterestMonth();
+		setNoOfBounceIwEcsChargeMonths();
+		setTotalAmountCashMonth();
+		setAverageMonthCashout();
+		setNoPurchaseByCardMonth();
+		setTotalAmountCashOutMonth();
+		setTotalNegativeChargeMonth();
+		setStdDevMonthCashIn();
+		setCoefVarMonthCashIn();
+		setTotalDiscretionAmountMonth();
+		setTotalInsuranceAmountMonth();
+		setNoCashOutMonth();
+		setAverageMonthlyCashIn();
+		setAverageCashWithdrawMonth();
+		setAverageCashDepositMonth();
+		setTotalCardPurchaseAmount();
+		setTravelSpendMonth();
+		setTotalCashbackReceivedMonth();
+		setTravelSpendIncomeMonth();
+		setNocashInMonth();
+		setStdDevMonthCashOut();
+		setNoCashWithdrawMonth();
+		setSalaryIncomeMonth();
+		setTotalGoodSavingsMonth();
+		setGoodSavingsIncomeMonth();
+		setNoBankChargesMonth();
+		setCoefVarMonthCashOut();
+
 	}
 
 	@JsonIgnore
@@ -211,7 +243,7 @@ public class FeatureBaseHelper implements Serializable {
 
 	public double netInterestMonth;
 
-	public void setNetInterestMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setNetInterestMonth() throws ParseException {
 
 		this.netInterestMonth = getTotalAmountMonthlySum(bankTransaction, null,
 				Arrays.asList("Interest", "Interest Charges"));
@@ -220,7 +252,7 @@ public class FeatureBaseHelper implements Serializable {
 
 	public double totalInterestMonth;
 
-	public void setTotalInterestMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setTotalInterestMonth() throws ParseException {
 
 		this.totalInterestMonth = getTotalAmountMonthlySum(bankTransaction, null, Arrays.asList("Interest"));
 
@@ -228,7 +260,7 @@ public class FeatureBaseHelper implements Serializable {
 
 	public long noOfBounceIwEcsChargeMonths;
 
-	public void setNoOfBounceIwEcsChargeMonths(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setNoOfBounceIwEcsChargeMonths() throws ParseException {
 		this.noOfBounceIwEcsChargeMonths = getTotalAmountMonthlyCount(bankTransaction, null,
 				Arrays.asList("Bounced I/W ECS"));
 
@@ -236,7 +268,7 @@ public class FeatureBaseHelper implements Serializable {
 
 	public double totalAmountCashInMonth;
 
-	public void setTotalAmountCashMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setTotalAmountCashMonth() throws ParseException {
 
 		this.totalAmountCashInMonth = getTotalAmountMonthlySum(bankTransaction, CATEGORY_TYPE.INFLOW, null);
 
@@ -244,14 +276,14 @@ public class FeatureBaseHelper implements Serializable {
 
 	public double averageMonthCashout;
 
-	public void setAverageMonthCashout(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setAverageMonthCashout() throws ParseException {
 		this.averageMonthCashout = getAverageAmountMonthlySum(bankTransaction, CATEGORY_TYPE.OUTFLOW, null);
 
 	}
 
 	public long noPurchaseByCardMonth;
 
-	public void setNoPurchaseByCardMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setNoPurchaseByCardMonth() throws ParseException {
 
 		this.noPurchaseByCardMonth = getTotalAmountMonthlyCount(bankTransaction, CATEGORY_TYPE.OUTFLOW,
 				Arrays.asList("Purchase by Card"));
@@ -260,14 +292,14 @@ public class FeatureBaseHelper implements Serializable {
 
 	public double totalAmountCashOutMonth;
 
-	public void setTotalAmountCashOutMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setTotalAmountCashOutMonth() throws ParseException {
 
 		this.totalAmountCashOutMonth = getTotalAmountMonthlySum(bankTransaction, CATEGORY_TYPE.OUTFLOW, null);
 	}
 
 	public double totalNegativeChargeMonth;
 
-	public void setTotalNegativeChargeMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setTotalNegativeChargeMonth() throws ParseException {
 
 		this.totalNegativeChargeMonth = getTotalAmountMonthlySum(bankTransaction, CATEGORY_TYPE.OUTFLOW, Arrays
 				.asList("Below Min Balance", "Bounced I/W ECS Charges", "Bounced IW Cheque charges", "Penal Charges"));
@@ -275,7 +307,7 @@ public class FeatureBaseHelper implements Serializable {
 
 	public double stdDevMonthCashIn;
 
-	public void setStdDevMonthCashIn(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setStdDevMonthCashIn() throws ParseException {
 
 		HashMap<String, Double> totalAmountMonthly = getTotalAmountMonthly(bankTransaction, CATEGORY_TYPE.INFLOW, null);
 		List<Double> values = new ArrayList<>(totalAmountMonthly.values());
@@ -285,7 +317,7 @@ public class FeatureBaseHelper implements Serializable {
 
 	public double coefVarMonthCashIn;
 
-	public void setCoefVarMonthCashIn(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setCoefVarMonthCashIn() throws ParseException {
 
 		HashMap<String, Double> totalAmountMonthly = getTotalAmountMonthly(bankTransaction, CATEGORY_TYPE.INFLOW, null);
 		List<Double> values = new ArrayList<>(totalAmountMonthly.values());
@@ -295,7 +327,7 @@ public class FeatureBaseHelper implements Serializable {
 
 	public double totalDiscretionAmountMonth;
 
-	public void setTotalDiscretionAmountMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setTotalDiscretionAmountMonth() throws ParseException {
 		this.totalDiscretionAmountMonth = getTotalAmountMonthlySum(bankTransaction, CATEGORY_TYPE.OUTFLOW,
 				Arrays.asList("Entertainment", "Food", "Clothing", "Online Shopping", "Software", "Travel",
 						"Foreign currency"));
@@ -303,64 +335,62 @@ public class FeatureBaseHelper implements Serializable {
 
 	public double totalInsuranceAmountMonth;
 
-	public void setTotalInsuranceAmountMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setTotalInsuranceAmountMonth() throws ParseException {
 		this.totalInsuranceAmountMonth = getTotalAmountMonthlySum(bankTransaction, CATEGORY_TYPE.OUTFLOW,
 				Arrays.asList("Insurance"));
 	}
 
 	public long noCashOutMonth;
 
-	public void setNoCashOutMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setNoCashOutMonth() throws ParseException {
 		this.noCashOutMonth = getTotalAmountMonthlyCount(bankTransaction, CATEGORY_TYPE.OUTFLOW, null);
 	}
 
 	public double averageMonthCashIn;
 
-	public void setAverageMonthlyCashIn(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setAverageMonthlyCashIn() throws ParseException {
 		this.averageMonthCashIn = getAverageAmountMonthlySum(bankTransaction, CATEGORY_TYPE.INFLOW, null);
 
 	}
 
 	public double averageCashWithdrawMonth;
 
-	public void setAverageCashWithdrawMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setAverageCashWithdrawMonth() throws ParseException {
 		this.averageCashWithdrawMonth = getAverageAmountMonthlySumByMonth(bankTransaction, CATEGORY_TYPE.OUTFLOW,
 				Arrays.asList("Cash Withdrawal"));
 	}
 
 	public double averageCashDepositMonth;
 
-	public void setAverageCashDepositMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setAverageCashDepositMonth() throws ParseException {
 		this.averageCashDepositMonth = getAverageAmountMonthlySumByMonth(bankTransaction, CATEGORY_TYPE.INFLOW,
 				Arrays.asList("Cash Deposit"));
 	}
 
 	public double totalCardPurchaseAmount;
 
-	public void setTotalCardPurchaseAmount(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setTotalCardPurchaseAmount() throws ParseException {
 		this.totalCardPurchaseAmount = getTotalAmountMonthlySum(bankTransaction, CATEGORY_TYPE.OUTFLOW,
 				Arrays.asList("Purchase by Card"));
 	}
 
 	public double travelSpendMonth;
 
-	public void setTravelSpendMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setTravelSpendMonth() throws ParseException {
 		this.travelSpendMonth = getTotalAmountMonthlySum(bankTransaction, CATEGORY_TYPE.OUTFLOW,
 				Arrays.asList("Travel"));
 	}
 
 	public double totalCashbackReceivedMonth;
 
-	public void setTotalCashbackReceivedMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setTotalCashbackReceivedMonth() throws ParseException {
 		this.totalCashbackReceivedMonth = getTotalAmountMonthlyCount(bankTransaction, CATEGORY_TYPE.INFLOW,
 				Arrays.asList("Cash Back"));
 	}
 
 	public double travelSpendIncomeMonth;
 
-	public void setTravelSpendIncomeMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
-		this.travelSpendIncomeMonth = getTotalAmountMonthlySum(bankTransaction, CATEGORY_TYPE.INFLOW,
-				Arrays.asList("Cash Back"));
+	public void setTravelSpendIncomeMonth() throws ParseException {
 
 		if (totalAmountCashInMonth == 0) {
 			this.travelSpendIncomeMonth = -1;
@@ -371,13 +401,13 @@ public class FeatureBaseHelper implements Serializable {
 
 	public long nocashInMonth;
 
-	public void setNocashInMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setNocashInMonth() throws ParseException {
 		this.nocashInMonth = getTotalAmountMonthlyCount(bankTransaction, CATEGORY_TYPE.OUTFLOW, null);
 	}
 
 	public double stdDevMonthCashOut;
 
-	public void setStdDevMonthCashOut(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setStdDevMonthCashOut() throws ParseException {
 
 		HashMap<String, Double> totalAmountMonthly = getTotalAmountMonthly(bankTransaction, CATEGORY_TYPE.OUTFLOW,
 				null);
@@ -388,28 +418,28 @@ public class FeatureBaseHelper implements Serializable {
 
 	public long noCashWithdrawMonth;
 
-	public void setNoCashWithdrawMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setNoCashWithdrawMonth() throws ParseException {
 		this.noCashWithdrawMonth = getTotalAmountMonthlyCount(bankTransaction, CATEGORY_TYPE.OUTFLOW,
 				Arrays.asList("Cash Withdrawal"));
 	}
 
 	public double salaryIncomeMonth;
 
-	public void setSalaryIncomeMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setSalaryIncomeMonth() throws ParseException {
 		this.salaryIncomeMonth = getTotalAmountMonthlySum(bankTransaction, CATEGORY_TYPE.INFLOW,
 				Arrays.asList("Salary"));
 	}
 
 	public double totalGoodSavingsMonth;
 
-	public void setTotalGoodSavingsMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setTotalGoodSavingsMonth() throws ParseException {
 		this.totalGoodSavingsMonth = getTotalAmountMonthlySum(bankTransaction, CATEGORY_TYPE.OUTFLOW,
 				Arrays.asList("Fixed Deposit", "Mutual Fund purchase", "Small Saving"));
 	}
 
 	public double goodSavingsIncomeMonth;
 
-	public void setGoodSavingsIncomeMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setGoodSavingsIncomeMonth() throws ParseException {
 		if (totalAmountCashInMonth == 0) {
 			this.goodSavingsIncomeMonth = -1;
 		} else {
@@ -420,14 +450,14 @@ public class FeatureBaseHelper implements Serializable {
 
 	public long noBankChargesMonth;
 
-	public void setNoBankChargesMonth(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setNoBankChargesMonth() throws ParseException {
 		this.noBankChargesMonth = getTotalAmountMonthlyCount(bankTransaction, CATEGORY_TYPE.OUTFLOW,
 				Arrays.asList("Bank Charges"));
 	}
 
 	public double coefVarMonthCashOut;
 
-	public void setCoefVarMonthCashOut(List<BankTransactionDetails> bankTransaction) throws ParseException {
+	public void setCoefVarMonthCashOut() throws ParseException {
 
 		HashMap<String, Double> totalAmountMonthly = getTotalAmountMonthly(bankTransaction, CATEGORY_TYPE.OUTFLOW,
 				null);

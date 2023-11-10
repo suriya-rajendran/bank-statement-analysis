@@ -19,6 +19,7 @@ import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.datamodel.BankTransactionDetails;
 import com.bankstatement.analysis.base.datamodel.BankTransactionDetails.CATEGORY_TYPE;
 import com.bankstatement.analysis.base.helper.FeatureHelper;
+import com.bankstatement.analysis.base.helper.FeatureUtil;
 import com.bankstatement.analysis.base.repo.ApplicationDetailRepository;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
 import com.bankstatement.analysis.transaction.pojo.BankAccountDetails;
@@ -132,7 +133,7 @@ public class FeatureService {
 			throws ParseException, JsonMappingException, JsonProcessingException {
 		if (!CollectionUtils.isEmpty(applicationDetail.getTransactionDetails())) {
 
-			FeatureHelper helper = new FeatureHelper(applicationDetail);
+			FeatureUtil helper = new FeatureUtil(applicationDetail);
 
 			applicationDetail.setResponse(objectMapper.writeValueAsString(helper));
 			if (StringUtils.isNotEmpty(applicationDetail.getResponse())) {
