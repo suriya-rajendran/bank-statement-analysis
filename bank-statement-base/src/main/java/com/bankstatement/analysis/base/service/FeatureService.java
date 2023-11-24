@@ -15,9 +15,9 @@ import org.springframework.util.CollectionUtils;
 
 import com.bankstatement.analysis.base.datamodel.ApplicationDetail;
 import com.bankstatement.analysis.base.datamodel.ApplicationDetail.APPLICATION_STATUS;
+import com.bankstatement.analysis.base.datamodel.BankTransactionDetails.CATEGORY_TYPE;
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.datamodel.BankTransactionDetails;
-import com.bankstatement.analysis.base.datamodel.BankTransactionDetails.CATEGORY_TYPE;
 import com.bankstatement.analysis.base.helper.FeatureHelper;
 import com.bankstatement.analysis.base.helper.FeatureUtil;
 import com.bankstatement.analysis.base.repo.ApplicationDetailRepository;
