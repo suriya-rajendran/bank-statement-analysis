@@ -114,6 +114,10 @@ public class PerifiosBankStatementServiceImpl implements
 	@Override
 	public ResponseEntity<?> initiateTransaction(InitiateRequestPojo initiateRequestPojo, String productCode)
 			throws Exception {
+		if (StringUtils.isEmpty(productCode)) {
+			productCode = "";
+		}
+
 		if (!StringUtils.isEmpty(initiateRequestPojo.getApplicationRequestNo())
 				&& !StringUtils.isEmpty(initiateRequestPojo.getCustomerRequestNo())) {
 			if (Arrays.asList(initiateRequestType).contains(initiateRequestPojo.getRequestType())) {
