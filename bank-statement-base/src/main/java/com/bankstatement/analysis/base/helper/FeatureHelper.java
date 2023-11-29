@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.util.CollectionUtils;
 
-import com.bankstatement.analysis.base.datamodel.ApplicationDetail;
 import com.bankstatement.analysis.base.datamodel.BankTransactionDetails;
 import com.bankstatement.analysis.base.datamodel.BankTransactionDetails.CATEGORY_TYPE;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -65,15 +64,17 @@ public class FeatureHelper implements Serializable {
 		return false;
 	}
 
-	public FeatureHelper(ApplicationDetail applicationDetail) throws ParseException {
+	public FeatureHelper(List<BankTransactionDetails> applicationDetail, String date) throws ParseException {
 
 		sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-		this.bankTransaction = applicationDetail.getTransactionDetails();
+		this.bankTransaction = new ArrayList<>();
+
+		bankTransaction.addAll(applicationDetail);
+
 		this.bankTransactionBy12Month = bankTransactionByMonth(bankTransaction, 1, new Date());
 		this.bankTransactionBy3Month = bankTransactionByMonth(bankTransaction, 3, new Date());
-		this.bankTransactionBy3MonthFromApplicationDate = bankTransactionByMonth(bankTransaction, 3,
-				sdf.parse(applicationDetail.getApplicationDate()));
+		this.bankTransactionBy3MonthFromApplicationDate = bankTransactionByMonth(bankTransaction, 3, sdf.parse(date));
 		setNetInterest12Month();
 		setTotalInterest12Month();
 		setNoOfBounceIwEcsCharge3Months();

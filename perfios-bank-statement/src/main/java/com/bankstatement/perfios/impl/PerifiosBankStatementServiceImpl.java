@@ -114,19 +114,22 @@ public class PerifiosBankStatementServiceImpl implements
 	@Override
 	public ResponseEntity<?> initiateTransaction(InitiateRequestPojo initiateRequestPojo, String productCode)
 			throws Exception {
-		if (!StringUtils.isEmpty(initiateRequestPojo.getRequestId())) {
+		if (!StringUtils.isEmpty(initiateRequestPojo.getApplicationRequestNo())
+				&& !StringUtils.isEmpty(initiateRequestPojo.getCustomerRequestNo())) {
 			if (Arrays.asList(initiateRequestType).contains(initiateRequestPojo.getRequestType())) {
 				try {
 					boolean valid = false;
 					BankStatementInitiate bsinitiate = bankStatementImpl
-							.getBankStatementInitiateByRequestId(initiateRequestPojo.getRequestId(), productCode);
+							.getBankStatementInitiateByRequestIdAndCustomerWebNo(
+									initiateRequestPojo.getApplicationRequestNo(),
+									initiateRequestPojo.getCustomerRequestNo());
 					if (bsinitiate == null) {
 						bsinitiate = new BankStatementInitiate();
-						bsinitiate.setRequestId(initiateRequestPojo.getRequestId());
+						bsinitiate.setRequestId(initiateRequestPojo.getApplicationRequestNo());
 						bsinitiate.setProcessType(initiateRequestPojo.getProcessType());
 						bsinitiate.setProcessId(
 								productCode.toUpperCase() + "-" + perfiosConfiguration.getVendorCode() + "-");
-						bsinitiate.setApplicationReferenceNo(initiateRequestPojo.getApplicationReferenceNo());
+						bsinitiate.setCustWebNo(initiateRequestPojo.getCustomerRequestNo());
 						valid = true;
 					}
 					if (STATUS.COMPLETED != bsinitiate.getStatus() && valid) {
@@ -135,9 +138,11 @@ public class PerifiosBankStatementServiceImpl implements
 
 						generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
 					}
-					if (STATUS.COMPLETED == bsinitiate.getStatus() && valid) {
-						productService.updateValidityCount(productCode);
-					}
+					
+					
+//					if (STATUS.COMPLETED == bsinitiate.getStatus() && valid) {
+//						productService.updateValidityCount(productCode);
+//					}
 
 				} catch (IOException | URISyntaxException | ParseException e) {
 					logger.info("error while initiating  ", e);
@@ -184,7 +189,7 @@ public class PerifiosBankStatementServiceImpl implements
 
 	private String generateInitiateRequest(InitiateRequestPojo initiateRequestPojo, String productCode,
 			BankStatementInitiate bsinitiate) throws Exception {
-		bsinitiate.setProductCode(productCode);
+//		bsinitiate.setProductCode(productCode);
 		bsinitiate.setRequestType(initiateRequestPojo.getRequestType());
 
 		bsinitiate.setName(initiateRequestPojo.getName());
@@ -317,7 +322,7 @@ public class PerifiosBankStatementServiceImpl implements
 			}
 
 			initiateRequestPojo.setStatus(bsinitiate.getStatus().toString());
-			initiateRequestPojo.setRequestId(bsinitiate.getRequestId());
+			initiateRequestPojo.setApplicationRequestNo(bsinitiate.getRequestId());
 			initiateRequestPojo.setProcessId(bsinitiate.getProcessId());
 			transactionStatusPojo.setInitiateRequestPojo(initiateRequestPojo);
 			return ResponseEntity.ok(transactionStatusPojo);

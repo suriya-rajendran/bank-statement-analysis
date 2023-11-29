@@ -6,13 +6,13 @@ server:
 
 
 spring.jpa.hibernate.ddl-auto: update
-#spring.datasource.url:  jdbc:mysql://localhost:3309/rapid_dev_external_integration?useUnicode=yes&characterEncoding=UTF-8
-#spring.datasource.username: rapid_sit
-#spring.datasource.password: Hotfoot@123
+spring.datasource.url:  jdbc:mysql://localhost:3309/rapid_dev_external_integration?useUnicode=yes&characterEncoding=UTF-8
+spring.datasource.username: rapid_sit
+spring.datasource.password: Hotfoot@123
 
-spring.datasource.url: jdbc:mysql://localhost:3306/bankstatement
-spring.datasource.username: root
-spring.datasource.password: root
+#spring.datasource.url: jdbc:mysql://localhost:3306/bankstatement
+#spring.datasource.username: root
+#spring.datasource.password: root
 
 spring.jpa.open-in-view: false
 
@@ -38,7 +38,7 @@ perfios.callBackUrl: https://usfb-rapid-sit.unitybank.co.in/forum-analysis/rest/
 perfios.vendor: centrum
 perfios.host: demo.perfios.com
 perfios.baseUrl: KuberaVault/insights
-perfios.privateKeyPath: D:\Workspace\bank-statement-analysis\perfios-bank-statement\src\main\java\private_key.txt
+perfios.privateKeyPath: /home/vagrant/Downloads/private_key.txt
 #perfios.private-key-path: /data/deployment/UNITY/common_platform/communication/perfios/private_key.txt
 perfios.digestAlgorithm: SHA-1
 perfios.signatureAlgorithm: RSA/ECB/PKCS1Padding

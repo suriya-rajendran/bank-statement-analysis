@@ -10,10 +10,14 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
+import org.springframework.util.CollectionUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AccessLevel;
@@ -35,9 +39,13 @@ public class Customer extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	private CUSTOMER_TYPE customerType;
 
+	@Lob
+	@Column(name = "customer_response")
+	private String customerResponse;
+
 	@Column(name = "report_status")
 	@Enumerated(EnumType.STRING)
-	private REPORT_STATUS reportStatus;
+	private REPORT_STATUS reportStatus = REPORT_STATUS.NOT_INITIATED;
 
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@OrderBy("id")
@@ -51,6 +59,30 @@ public class Customer extends BaseEntity {
 
 	public enum REPORT_STATUS {
 		NOT_INITIATED, INITIATED, CALLBACK, REPORT_GENERATED
+	}
+
+	@JsonIgnore
+	public void addAccountDetails(AccountDetail env) {
+		if (env != null) {
+			try {
+				this.accountDetail.add(env);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@JsonIgnore
+	public void addAccountDetailsList(List<AccountDetail> env) {
+		if (!CollectionUtils.isEmpty(env)) {
+			try {
+				this.accountDetail.addAll(env);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 }

@@ -7,14 +7,10 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
-import com.bankstatement.analysis.base.datamodel.ApplicationDetail;
 import com.bankstatement.analysis.base.datamodel.BankTransactionDetails;
-import com.bankstatement.analysis.base.datamodel.BankTransactionDetails.CATEGORY_TYPE;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -47,15 +43,17 @@ public class FeatureUtil implements Serializable {
 
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-	public FeatureUtil(ApplicationDetail applicationDetail) throws ParseException {
+	public FeatureUtil(List<BankTransactionDetails> bankTransactionDetails, String applicationDate)
+			throws ParseException {
 		super();
-		this.bankTransaction = applicationDetail.getTransactionDetails();
+		this.bankTransaction = new ArrayList<>();
+		this.bankTransaction.addAll(bankTransactionDetails);
 		this.bankTransactionBy12Month = bankTransactionByMonth(bankTransaction, 12, new Date());
 
 		this.bankTransactionBy3Month = bankTransactionByMonth(bankTransaction, 3, new Date());
 
 		this.bankTransactionBy3MonthFromApplicationDate = bankTransactionByMonth(bankTransaction, 3,
-				sdf.parse(applicationDetail.getApplicationDate()));
+				sdf.parse(applicationDate));
 		this.featureBy12Months = new FeatureBaseHelper(bankTransactionBy12Month);
 		this.featureBy3Months = new FeatureBaseHelper(bankTransactionBy3Month);
 		this.featureBy3MonthsFromApplicationDate = new FeatureBaseHelper(bankTransactionBy3MonthFromApplicationDate);

@@ -5,14 +5,14 @@
 	<parent>
 		<groupId>com.bsa</groupId>
 		<artifactId>bank-statement-analysis</artifactId>
-		<version>1.0.0</version>
+		<version>1.0.1</version>
 	</parent>
 	<artifactId>perfios-bank-statement</artifactId>
 	<dependencies>
 		<dependency>
 			<groupId>com.bsa</groupId>
 			<artifactId>bank-statement-base</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1</version>
 		</dependency>
 
 		<dependency>

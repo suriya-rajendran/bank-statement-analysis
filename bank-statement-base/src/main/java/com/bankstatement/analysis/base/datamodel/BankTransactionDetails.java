@@ -10,6 +10,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
@@ -73,6 +74,10 @@ public class BankTransactionDetails implements Serializable {
 
 	@Column(name = "category")
 	public String category;
+
+	@Lob
+	@Column(name = "customer_response")
+	private String customerResponse;
 
 	public static enum CATEGORY_TYPE {
 		INFLOW, OUTFLOW

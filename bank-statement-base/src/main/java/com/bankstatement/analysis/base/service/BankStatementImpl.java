@@ -39,8 +39,9 @@ public class BankStatementImpl {
 
 	public Map<String, String> fetchBankStatementRecords(Integer days, String productCode) {
 		Pageable limit = PageRequest.of(0, days);
-		return convertObjectToMap(bsInitiateRepository.findByRequestDate(productCode, new Date(), limit));
-
+		// return convertObjectToMap(bsInitiateRepository.findByRequestDate(productCode,
+		// new Date(), limit));
+		return null;
 	}
 
 	private Map<String, String> convertObjectToMap(List<Object[]> obj) {
@@ -66,10 +67,21 @@ public class BankStatementImpl {
 
 	}
 
-	public BankStatementInitiate getBankStatementInitiateByRequestId(String requestId, String productCode)
+//	public BankStatementInitiate getBankStatementInitiateByRequestId(String requestId, String productCode)
+//			throws Exception {
+//		try {
+//			return bsInitiateRepository.findByRequestIdAndProductCode(requestId, productCode);
+//		} catch (Exception e) {
+//			logger.error(" error while fetching initiate bs requestId: " + requestId, e);
+//			throw new Exception();
+//		}
+//
+//	}
+
+	public BankStatementInitiate getBankStatementInitiateByRequestIdAndCustomerWebNo(String requestId, String custWebNo)
 			throws Exception {
 		try {
-			return bsInitiateRepository.findByRequestIdAndProductCode(requestId, productCode);
+			return bsInitiateRepository.findByRequestIdAndCustWebNo(requestId, custWebNo);
 		} catch (Exception e) {
 			logger.error(" error while fetching initiate bs requestId: " + requestId, e);
 			throw new Exception();

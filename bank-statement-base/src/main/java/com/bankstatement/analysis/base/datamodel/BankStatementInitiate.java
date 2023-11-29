@@ -22,8 +22,8 @@ public class BankStatementInitiate extends BankStatementBaseModel implements Ser
 	*/
 	private static final long serialVersionUID = -4464469374695222538L;
 
-	@Column(name = "application_ref_no")
-	private String applicationReferenceNo;
+	@Column(name = "cust_web_no")
+	private String custWebNo;
 
 	@Column(name = "application_date")
 	private String applicationDate;
@@ -31,8 +31,8 @@ public class BankStatementInitiate extends BankStatementBaseModel implements Ser
 	@Column(name = "request_id")
 	private String requestId;
 
-	@Column(name = "product_code")
-	private String productCode;
+//	@Column(name = "product_code")
+//	private String productCode;
 
 	@Column(name = "request_type")
 	private String requestType;

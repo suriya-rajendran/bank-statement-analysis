@@ -17,7 +17,10 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
+import org.springframework.util.CollectionUtils;
+
 import com.bankstatement.analysis.base.datamodel.Customer.CUSTOMER_TYPE;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AccessLevel;
@@ -59,9 +62,33 @@ public class AccountDetail extends BaseEntity {
 	@OrderBy("id")
 	@JoinColumn(name = "account_id")
 	@Setter(AccessLevel.NONE)
-	private List<BankTransactionDetails> account = new ArrayList<>();
+	private List<BankTransactionDetails> transaction = new ArrayList<>();
 
 	public enum ACCOUNT_STATUS {
 		INCLUDED, NOT_INCLUDED
+	}
+
+	@JsonIgnore
+	public void addTransactionDetails(BankTransactionDetails env) {
+		if (env != null) {
+			try {
+				this.transaction.add(env);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@JsonIgnore
+	public void addTransactionDetailsList(List<BankTransactionDetails> env) {
+		if (!CollectionUtils.isEmpty(env)) {
+			try {
+				this.transaction.addAll(env);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }

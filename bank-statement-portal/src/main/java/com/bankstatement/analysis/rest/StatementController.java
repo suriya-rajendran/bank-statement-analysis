@@ -1,5 +1,7 @@
 package com.bankstatement.analysis.rest;
 
+import java.util.HashMap;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
@@ -14,12 +16,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bankstatement.analysis.base.datamodel.BankStatementAggregate;
+import com.bankstatement.analysis.base.datamodel.BankStatementBaseModel.STATUS;
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.datamodel.BankStatementReport;
 import com.bankstatement.analysis.base.datamodel.BankStatementTransaction;
-import com.bankstatement.analysis.base.datamodel.BankStatementBaseModel.STATUS;
 import com.bankstatement.analysis.base.service.BankStatementImpl;
 import com.bankstatement.analysis.base.service.FeatureService;
+import com.bankstatement.analysis.request.pojo.BankStatementPojo;
 import com.bankstatement.analysis.request.pojo.CustomException;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
 import com.bankstatement.perfios.impl.PerifiosBankStatementServiceImpl;
@@ -39,11 +43,27 @@ public class StatementController {
 
 	public final static Logger logger = LoggerFactory.getLogger(StatementController.class);
 
+	@PostMapping("/initate")
+	public HashMap<String, String> saveApplicationDetails(HttpServletRequest request,
+			@RequestBody BankStatementPojo bankStatementPojo) throws Exception {
+
+		return featureService.saveApplicationDetails(bankStatementPojo);
+
+	}
+
+	@GetMapping("/initate-detail")
+	public BankStatementAggregate getApplicationDetails(HttpServletRequest request,
+			@RequestParam(value = "web_ref_id") String webRefId) throws Exception {
+
+		return featureService.getApplicationDetails(webRefId);
+
+	}
+
 	@PostMapping("/initate-statement")
 	public ResponseEntity<?> processStatement(HttpServletRequest request,
 			@RequestBody InitiateRequestPojo initiateRequestPojo) throws Exception {
 		if (StringUtils.isNotEmpty(initiateRequestPojo.getProcessType())) {
-			featureService.saveApplicationDetails(initiateRequestPojo);
+			featureService.updateApplicationDetails(initiateRequestPojo);
 			if ("Perifios".equalsIgnoreCase(initiateRequestPojo.getProcessType())) {
 				return perifiosBankStatementServiceImpl.initiateTransaction(initiateRequestPojo,
 						getProductCode(request));
@@ -106,25 +126,9 @@ public class StatementController {
 
 	}
 
-	@PostMapping("/delete-initate-statement")
-	public ResponseEntity<?> deleteInitiatedRequest(@RequestParam(value = "process_id") String processId)
-			throws Exception {
-		if (StringUtils.isNotEmpty(processId)) {
-
-			return featureService.deleteInitiatedRequest(processId);
-
-		}
-		throw new CustomException("400", "Invalid ProcessId type");
-
-	}
-
 	@GetMapping("/fetch/feature-detail")
-	public ResponseEntity<?> fetchfeatureResponse(
-			@RequestParam(value = "application_ref_no") String applicationReferenceNo) throws Exception {
-		if (StringUtils.isNotEmpty(applicationReferenceNo)) {
-			return featureService.fetchfeatureResponse(applicationReferenceNo);
-		}
-		throw new CustomException("400", "Application number cannot be empty");
+	public ResponseEntity<?> fetchfeatureResponse(@RequestBody BankStatementPojo bankStatementPojo) throws Exception {
+		return featureService.fetchfeatureResponse(bankStatementPojo);
 
 	}
 
@@ -132,9 +136,4 @@ public class StatementController {
 		return (String) request.getAttribute("product_code");
 	}
 
-	@PostMapping("/int")
-	public void extr(@RequestParam(value = "process_id") String processId) throws Exception {
-		featureService.extr(processId);
-
-	}
 }

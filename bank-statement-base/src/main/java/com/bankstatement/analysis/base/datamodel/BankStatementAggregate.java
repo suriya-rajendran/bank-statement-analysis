@@ -10,10 +10,14 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
+import org.springframework.util.CollectionUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AccessLevel;
@@ -43,6 +47,13 @@ public class BankStatementAggregate extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	private REPORT_TYPE reportType;
 
+	@Lob
+	@Column(name = "application_response")
+	private String applicationResponse;
+
+	@Column(name = "application_date")
+	private String applicationDate;
+
 	@Column(name = "aggregate_status")
 	@Enumerated(EnumType.STRING)
 	private AGGREGATE_STATUS aggregateStatus = AGGREGATE_STATUS.PENDING;
@@ -51,7 +62,7 @@ public class BankStatementAggregate extends BaseEntity {
 	@OrderBy("id")
 	@JoinColumn(name = "aggregate_id")
 	@Setter(AccessLevel.NONE)
-	private List<Customer> Customer = new ArrayList<>();
+	private List<Customer> customer = new ArrayList<>();
 
 	public enum REPORT_TYPE {
 		APPLICATION, MEMBER_WISE
@@ -60,5 +71,30 @@ public class BankStatementAggregate extends BaseEntity {
 	public enum AGGREGATE_STATUS {
 		PENDING, COMPLETED
 	}
+	
+	@JsonIgnore
+	public void addCustomer(Customer env) {
+		if (env != null) {
+			try {
+				this.customer.add(env);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@JsonIgnore
+	public void addCustomerList(List<Customer> env) {
+		if (!CollectionUtils.isEmpty(env)) {
+			try {
+				this.customer.addAll(env);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 
 }

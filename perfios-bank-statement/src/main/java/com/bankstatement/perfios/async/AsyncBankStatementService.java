@@ -112,12 +112,6 @@ public class AsyncBankStatementService {
 
 						featureService.constructFeature(bankStatementReport.getResponse(), bankStatementInitiate);
 					}
-				} else {
-					BankStatementInitiate bankStatementInitiate = bankStatementImpl
-							.getBankStatementInitiateByProcessId(bankStatementTransaction.getProcessId());
-
-					featureService.reTrigger(bankStatementReport.getResponse(), bankStatementInitiate);
-
 				}
 
 			}

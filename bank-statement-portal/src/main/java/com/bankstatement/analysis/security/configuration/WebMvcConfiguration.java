@@ -16,14 +16,14 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
 	@Autowired
 	ProductRepository productRepository;
 
-	@Override
-	public void addInterceptors(InterceptorRegistry registry) {
-		Interceptor interceptor = new Interceptor(productRepository);
-		
-		List<String> pathPatterns = new ArrayList<>();
-		pathPatterns.add("/rest/bank/**");
-		pathPatterns.add("/rest/profile/**");
-
-		registry.addInterceptor(interceptor).addPathPatterns(pathPatterns);
-	}
+//	@Override
+//	public void addInterceptors(InterceptorRegistry registry) {
+//		Interceptor interceptor = new Interceptor(productRepository);
+//		
+//		List<String> pathPatterns = new ArrayList<>();
+//		pathPatterns.add("/rest/bank/**");
+//		pathPatterns.add("/rest/profile/**");
+//
+//		registry.addInterceptor(interceptor).addPathPatterns(pathPatterns);
+//	}
 }
