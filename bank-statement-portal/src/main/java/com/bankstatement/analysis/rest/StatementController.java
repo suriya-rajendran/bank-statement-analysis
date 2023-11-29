@@ -126,7 +126,7 @@ public class StatementController {
 
 	}
 
-	@GetMapping("/fetch/feature-detail")
+	@PostMapping("/fetch/feature-detail")
 	public ResponseEntity<?> fetchfeatureResponse(@RequestBody BankStatementPojo bankStatementPojo) throws Exception {
 		return featureService.fetchfeatureResponse(bankStatementPojo);
 

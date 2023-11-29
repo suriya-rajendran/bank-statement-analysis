@@ -15,7 +15,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import com.bankstatement.analysis.base.datamodel.AccountDetail;
 import com.bankstatement.analysis.base.datamodel.AccountDetail.ACCOUNT_STATUS;
@@ -30,6 +29,8 @@ import com.bankstatement.analysis.base.datamodel.Customer.REPORT_STATUS;
 import com.bankstatement.analysis.base.helper.FeatureUtil;
 import com.bankstatement.analysis.base.repo.BankStatementAggregateRepo;
 import com.bankstatement.analysis.base.repo.CustomerRepo;
+import com.bankstatement.analysis.perfios.request.pojo.AccountAnalysis;
+import com.bankstatement.analysis.perfios.request.pojo.SummaryInfo;
 import com.bankstatement.analysis.request.pojo.BankStatementPojo;
 import com.bankstatement.analysis.request.pojo.CustomException;
 import com.bankstatement.analysis.request.pojo.CustomerPojo;
@@ -145,11 +146,20 @@ public class FeatureService {
 
 				for (BankAccountDetails det : bankDetails) {
 
+					JsonNode bankdetails = jsonNode.get("accountAnalysis");
+
+					List<AccountAnalysis> accountAnalysis = objectMapper.readValue(bankdetails.toString(),
+							new TypeReference<List<AccountAnalysis>>() {
+							});
+
 					AccountDetail accountDetail = new AccountDetail();
 
 					accountDetail.setAcNumber(det.getAccountNo());
 
-					accountDetail.setBankName(det.getAccountType());
+					AccountAnalysis info = accountAnalysis.stream()
+							.filter(d -> d.getAccountNo().equalsIgnoreCase(det.getAccountNo())).findAny().orElse(null);
+
+					accountDetail.setBankName(info.getSummaryInfo().getInstName());
 
 					for (Xn d : det.getXns()) {
 						BankTransactionDetails details = new BankTransactionDetails();
@@ -200,7 +210,7 @@ public class FeatureService {
 		String response = null;
 
 		List<BankTransactionDetails> bankTransactionDetails = new ArrayList<>();
-		BankStatementAggregate aggregate = bankStatementAggregateRepo.findByWebRefID(bankStatementPojo.getRequestNo());
+		BankStatementAggregate aggregate = bankStatementAggregateRepo.findByWebRefID(bankStatementPojo.getWebRefNo());
 
 		if (aggregate != null && aggregate.getReportType() != null) {
 			for (CustomerPojo vo : bankStatementPojo.getCustomer()) {
@@ -240,7 +250,7 @@ public class FeatureService {
 			bankTransactionDetails = new ArrayList<>();
 
 			if (REPORT_TYPE.APPLICATION == aggregate.getReportType()) {
-				aggregate = bankStatementAggregateRepo.findByWebRefID(bankStatementPojo.getRequestNo());
+				aggregate = bankStatementAggregateRepo.findByWebRefID(bankStatementPojo.getWebRefNo());
 
 				if (!aggregate.getCustomer().stream().anyMatch(d -> d.getReportStatus() == REPORT_STATUS.INITIATED
 						|| d.getReportStatus() == REPORT_STATUS.NOT_INITIATED)) {

@@ -19,9 +19,6 @@ public class BankStatementPojo implements Serializable {
 	@JsonProperty("application_reference_no")
 	private String applicationReferenceNo;
 
-	@JsonProperty("request_no")
-	private String requestNo;
-
 	@JsonProperty("web_ref_no")
 	private String webRefNo;
 

@@ -4,9 +4,9 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -103,13 +103,29 @@ public class FeatureUtil implements Serializable {
 	private List<BankTransactionDetails> bankTransactionByMonth(List<BankTransactionDetails> bankTransaction,
 			Integer months, Date date) {
 
-		Date currentDate = date;
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(date);
+		if (isCurrentMonthAndYear(calendar)) {
+			calendar.add(Calendar.MONTH, -1);
+		}
+		calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+		Date toDate = calendar.getTime();
+
+		calendar = Calendar.getInstance();
+		calendar.setTime(date);
+		if (isCurrentMonthAndYear(calendar)) {
+			calendar.add(Calendar.MONTH, -months);
+		} else {
+			calendar.add(Calendar.MONTH, -(months - 1));
+		}
+		calendar.set(Calendar.DAY_OF_MONTH, 1);
+		Date fromDate = calendar.getTime();
 
 		List<BankTransactionDetails> monthsTransactions = new ArrayList<>();
 		for (BankTransactionDetails transaction : bankTransaction) {
 			try {
-				Date transactionDate = new SimpleDateFormat("yyyy-MM-dd").parse(transaction.getDate());
-				if (isWithinLastMonths(transactionDate, currentDate, months)) {
+				Date inputdate = new SimpleDateFormat("yyyy-MM-dd").parse(transaction.getDate());
+				if (isBetweenDates(inputdate, fromDate, toDate)) {
 					monthsTransactions.add(transaction);
 				}
 			} catch (Exception e) {
@@ -120,20 +136,20 @@ public class FeatureUtil implements Serializable {
 	}
 
 	@JsonIgnore
-	private boolean isWithinLastMonths(Date transactionDate, Date currentDate, Integer months) {
-		// Get calendar objects for transaction and current dates
-		LocalDate localDate1 = transactionDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-		LocalDate localDate2 = currentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+	private boolean isBetweenDates(Date input, Date from, Date to) {
+		LocalDate inputDate = input.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		LocalDate fromDate = from.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		LocalDate toDate = to.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
-		// Calculate the period between the two dates
-		Period period = Period.between(localDate1, localDate2);
+		return !inputDate.isBefore(fromDate) && !inputDate.isAfter(toDate);
+	}
 
-		// Extract the number of months from the period
-		int monthsDifference = period.getYears() * 12 + period.getMonths();
-		if (monthsDifference == months) {
-			return true;
-		}
-		return false;
+	private boolean isCurrentMonthAndYear(Calendar calendar) {
+		Calendar currentCalendar = Calendar.getInstance();
+
+		// Compare year and month
+		return calendar.get(Calendar.YEAR) == currentCalendar.get(Calendar.YEAR)
+				&& calendar.get(Calendar.MONTH) == currentCalendar.get(Calendar.MONTH);
 	}
 
 	@JsonProperty("net_interest_12m")
