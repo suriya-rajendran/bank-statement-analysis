@@ -58,7 +58,7 @@ public class Customer extends BaseEntity {
 	}
 
 	public enum REPORT_STATUS {
-		NOT_INITIATED, INITIATED, CALLBACK, REPORT_GENERATED
+		NOT_INITIATED, INITIATED, CALLBACK, REPORT_GENERATED,FAILED
 	}
 
 	@JsonIgnore

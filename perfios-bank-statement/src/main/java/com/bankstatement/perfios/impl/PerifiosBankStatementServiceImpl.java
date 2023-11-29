@@ -138,8 +138,7 @@ public class PerifiosBankStatementServiceImpl implements
 
 						generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
 					}
-					
-					
+
 //					if (STATUS.COMPLETED == bsinitiate.getStatus() && valid) {
 //						productService.updateValidityCount(productCode);
 //					}
@@ -178,9 +177,11 @@ public class PerifiosBankStatementServiceImpl implements
 				initiateRequestPojo.setUrl((String) successResponse.get(TRANSACTION_URL));
 				initiateRequestPojo.setExpiry((String) successResponse.get(TRANSACTION_EXPIRES));
 				initiateRequestPojo.setStatus(STATUS.COMPLETED.toString());
+				featureService.updateCustomer(bsinitiate.getCustWebNo(), "INITIATED");
 			} else {
 				bsinitiate.setStatus(STATUS.FAILED);
 				initiateRequestPojo.setStatus(STATUS.FAILED.toString());
+				featureService.updateCustomer(bsinitiate.getCustWebNo(), "FAILED");
 			}
 		}
 		bankStatementImpl.saveBankStatementInitiate(bsinitiate);

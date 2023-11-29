@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import com.bankstatement.analysis.base.datamodel.AccountDetail;
 import com.bankstatement.analysis.base.datamodel.AccountDetail.ACCOUNT_STATUS;
@@ -108,6 +109,17 @@ public class FeatureService {
 		if (aggregate != null && aggregate.getReportType() == null) {
 			aggregate.setReportType(REPORT_TYPE.valueOf(initiate.getReportType()));
 			bankStatementAggregateRepo.save(aggregate);
+		}
+
+	}
+
+	public void updateCustomer(String custWebRefNo, String reportStatus) {
+
+		Customer customer = customerRepo.findByWebRefID(custWebRefNo);
+
+		if (customer != null && org.apache.commons.lang.StringUtils.isEmpty(reportStatus)) {
+			customer.setReportStatus(REPORT_STATUS.valueOf(reportStatus));
+			customerRepo.save(customer);
 		}
 
 	}
