@@ -33,6 +33,7 @@
 		<module>bank-statement-base</module> 
 		<module>perfios-bank-statement</module>
 		<module>bank-statement-portal</module>
+		<module>base-security-datamodel</module>
 	</modules>
 
 </project>

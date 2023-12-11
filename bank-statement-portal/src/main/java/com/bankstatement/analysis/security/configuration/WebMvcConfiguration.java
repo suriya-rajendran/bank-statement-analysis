@@ -9,21 +9,24 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.bankstatement.analysis.base.repo.ProductRepository;
+import com.bankstatement.analysis.base.security.jwt.JwtUtil;
 
 @Configuration
 public class WebMvcConfiguration implements WebMvcConfigurer {
 
 	@Autowired
-	ProductRepository productRepository;
+	JwtUtil jwtUtil;
 
-//	@Override
-//	public void addInterceptors(InterceptorRegistry registry) {
-//		Interceptor interceptor = new Interceptor(productRepository);
-//		
-//		List<String> pathPatterns = new ArrayList<>();
-//		pathPatterns.add("/rest/bank/**");
-//		pathPatterns.add("/rest/profile/**");
-//
-//		registry.addInterceptor(interceptor).addPathPatterns(pathPatterns);
-//	}
+	@Override
+	public void addInterceptors(InterceptorRegistry registry) {
+		Interceptor interceptor = new Interceptor(jwtUtil);
+
+		List<String> pathPatterns = new ArrayList<>();
+		pathPatterns.add("/login");
+
+		pathPatterns.add("/uploadFile");
+
+		registry.addInterceptor(interceptor).excludePathPatterns(pathPatterns);
+		// .addPathPatterns(pathPatterns);
+	}
 }
