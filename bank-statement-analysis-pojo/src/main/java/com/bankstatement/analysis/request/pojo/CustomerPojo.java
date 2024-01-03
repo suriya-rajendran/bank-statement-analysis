@@ -19,14 +19,15 @@ public class CustomerPojo implements Serializable {
 	@JsonProperty("customer_reference_no")
 	private String customerReferenceNo;
 
+
 	@JsonProperty("customer_web_ref_no")
 	private String customerWebRefNo;
 
 	@JsonProperty("customer_type")
 	private CUSTOMER_TYPE_POJO customerType;
 
-	@JsonProperty("account_details")
-	private List<AccountPojo> accountPojo=new ArrayList<>();
+	@JsonProperty("customer_transaction_details")
+	private List<CustomerTransactionPojo> customerDetail = new ArrayList<>();
 
 	public enum CUSTOMER_TYPE_POJO {
 		APPLICANT, CO_APPLICANT

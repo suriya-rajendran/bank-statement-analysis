@@ -16,13 +16,17 @@ public class InitiateRequestPojo implements Serializable {
 	 */
 	private static final long serialVersionUID = -9140553891726859613L;
 
-	private String reportType;
+//	private String reportType;
 
 	private String processType;
 
 	private String yearMonthFrom;
 
-	private String customerRequestNo;
+	private String customerWebRefNo;
+
+	private String applicationWebRefNo;
+	
+	private String tranWebRefNo;
 
 	private String applicationDate;
 
@@ -36,7 +40,7 @@ public class InitiateRequestPojo implements Serializable {
 
 	private boolean pennyDropVerification;
 
-	private boolean nameMatch;
+	private boolean scannedDoc;
 
 	private String processId;
 
@@ -45,5 +49,22 @@ public class InitiateRequestPojo implements Serializable {
 	private String expiry;
 
 	private String status;
+
+	private String fileName;
+
+	private String institutionType;
+	
+	private String transactionId;
+
+	private String fileId;
+
+	public InitiateRequestPojo() {
+		super();
+	}
+
+	public InitiateRequestPojo(String processType) {
+		super();
+		this.processType = processType;
+	}
 
 }

@@ -6,7 +6,7 @@ server:
 
 
 spring.jpa.hibernate.ddl-auto: update
-spring.datasource.url:  jdbc:mysql://localhost:3309/rapid_dev_external_integration?useUnicode=yes&characterEncoding=UTF-8
+spring.datasource.url:  jdbc:mysql://localhost:3309/rapid_dev_forum?useUnicode=yes&characterEncoding=UTF-8
 spring.datasource.username: rapid_sit
 spring.datasource.password: Hotfoot@123
 
@@ -29,7 +29,23 @@ security.salt: 0x1b
 
 report.downloadPath: 
 
+proofdocuments.upload_file_path: /home/vagrant/Downloads/perfios
 
+perfios.bsa:
+    upload:
+      #private-key-path: /data/deployment/UNITY/common_platform/communication/perfios/perivate_key_upload.txt
+      private-key-path: /home/vagrant/Downloads/perfios/perivate_key_upload.txt
+      init.transaction.url: /KuberaVault/api/v3/organisations/centrum/transactions
+      institution.list.url: /KuberaVault/api/v3/organisations/centrum/institutions
+      encryption.algorithm: SHA256withRSA/PSS
+      #file.url: /home/vagrant/Downloads/perfios
+      file.url: /KuberaVault/api/v3/organisations/centrum/transactions/{perfiosTransactionId}/files
+      file.path: /data/deployment/UNITY/files/
+      file.process.url: /KuberaVault/api/v3/organisations/centrum/transactions/{perfiosTransactionId}/bank-statements
+      retrieve.report.url: /KuberaVault/api/v3/organisations/centrum/transactions/{perfiosTransactionId}/reports
+      generate.report.url: /KuberaVault/api/v3/organisations/centrum/transactions/{perfiosTransactionId}/reports
+      transaction.status.url: /organisations/centrum/transactions/{perfiosTransactionId}/status
+      callBackUrl: https://usfb-rapid-sit.unitybank.co.in/unity-external-integration/rest/perfios/bsa/external/callback
 
 
 

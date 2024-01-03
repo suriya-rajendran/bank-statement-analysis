@@ -31,13 +31,17 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 public class BankStatementAggregate extends BaseEntity {
 
-	@Column(name = "application_reference_no", unique = true)
+	@Column(name = "application_reference_no")
 	@JsonProperty("application_reference_no")
 	private String applicationReferenceNo;
 
 	@Column(name = "tenure")
 	@JsonProperty("tenure")
 	private Integer tenure;
+
+	@Column(name = "process_type")
+	@JsonProperty("process_type")
+	private String processType;
 
 	@Column(name = "loan_amount")
 	@JsonProperty("loan_amount")
@@ -71,7 +75,7 @@ public class BankStatementAggregate extends BaseEntity {
 	public enum AGGREGATE_STATUS {
 		PENDING, COMPLETED
 	}
-	
+
 	@JsonIgnore
 	public void addCustomer(Customer env) {
 		if (env != null) {
@@ -95,6 +99,5 @@ public class BankStatementAggregate extends BaseEntity {
 			}
 		}
 	}
-
 
 }

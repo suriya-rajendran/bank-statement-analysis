@@ -19,14 +19,13 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		Interceptor interceptor = new Interceptor(jwtUtil);
-
-		List<String> pathPatterns = new ArrayList<>();
-		pathPatterns.add("/login");
-
-		pathPatterns.add("/uploadFile");
-
-		registry.addInterceptor(interceptor).excludePathPatterns(pathPatterns);
+//		Interceptor interceptor = new Interceptor(jwtUtil);
+//
+//		List<String> pathPatterns = new ArrayList<>();
+//		pathPatterns.add("/sign/in");
+// 
+//
+//		registry.addInterceptor(interceptor).excludePathPatterns(pathPatterns);
 		// .addPathPatterns(pathPatterns);
 	}
 }

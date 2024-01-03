@@ -1,5 +1,6 @@
 package com.bankstatement.analysis.base.datamodel;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +32,13 @@ import lombok.Setter;
 @Entity
 @Data
 @Table(name = "account_details")
-@EqualsAndHashCode(callSuper = true)
-public class AccountDetail extends BaseEntity {
+@EqualsAndHashCode(callSuper = false)
+public class AccountDetail extends BaseEntity implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1233843827932887171L;
 
 	@Column(name = "account_holder_name")
 	@JsonProperty("account_holder_name")

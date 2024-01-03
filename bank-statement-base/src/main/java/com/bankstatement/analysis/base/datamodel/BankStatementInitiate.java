@@ -9,6 +9,10 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.SelectBeforeUpdate;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -16,6 +20,9 @@ import lombok.EqualsAndHashCode;
 @Entity
 @EqualsAndHashCode(callSuper = false)
 @Table(name = "bank_statement_initiate")
+@DynamicUpdate
+@DynamicInsert
+@SelectBeforeUpdate
 public class BankStatementInitiate extends BankStatementBaseModel implements Serializable {
 	/**
 	* 
@@ -25,26 +32,26 @@ public class BankStatementInitiate extends BankStatementBaseModel implements Ser
 	@Column(name = "cust_web_no")
 	private String custWebNo;
 
+	@Column(name = "cust_trans_web_no")
+	private String docWebNo;
+
 	@Column(name = "application_date")
 	private String applicationDate;
 
 	@Column(name = "request_id")
 	private String requestId;
 
-//	@Column(name = "product_code")
-//	private String productCode;
+	@Column(name = "transaction_id")
+	private String transactionId;
 
 	@Column(name = "request_type")
 	private String requestType;
 
-	@Column(name = "name")
-	private String name;
-
-	@Column(name = "name_match")
-	private boolean nameMatch;
-
-	@Column(name = "penny_drop_verification")
-	private boolean pennyDropVerification;
+	@Column(name = "institution_type")
+	private String institutionType;
+	
+	@Column(name = "scanned_doc")
+	private boolean scannedDoc;
 
 	@Column(name = "penny_drop_status")
 	@Enumerated(EnumType.STRING)

@@ -22,4 +22,5 @@ public class BankStatementTransaction extends BankStatementBaseModel implements 
 	*/
 	private static final long serialVersionUID = -4464469374695222538L;
 
+
 }

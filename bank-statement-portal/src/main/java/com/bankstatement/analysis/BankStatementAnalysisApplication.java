@@ -13,6 +13,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.web.client.RestTemplate;
 
 import com.bankstatement.analysis.base.util.UploadFile;
 
@@ -24,6 +26,7 @@ import com.bankstatement.analysis.base.util.UploadFile;
 @EnableAsync(proxyTargetClass = true)
 @EnableScheduling
 @Retryable
+@EnableTransactionManagement
 public class BankStatementAnalysisApplication {
 
 	public static void main(String[] args) {
@@ -32,8 +35,10 @@ public class BankStatementAnalysisApplication {
 
 	@Bean
 	public ServletRegistrationBean<UploadFile> uploadFile(
-			@Value("${proofdocuments.upload_file_path:/media/sf_workspace/analyser}") String rootPath,
+			@Value("${proofdocuments.upload_file_path:/home/vagrant/Downloads/perfios}") String rootPath,
 			@Value("${upload.whitelist.ext:.pdf}") String allowedExtensions) {
 		return new ServletRegistrationBean<UploadFile>(new UploadFile(rootPath, allowedExtensions), "/uploadfile");
 	}
+	
+	  
 }

@@ -78,10 +78,10 @@ public class BankStatementImpl {
 //
 //	}
 
-	public BankStatementInitiate getBankStatementInitiateByRequestIdAndCustomerWebNo(String requestId, String custWebNo)
-			throws Exception {
+	public BankStatementInitiate getBankStatementInitiateByRequestIdAndCustomerWebNo(String requestId, String custWebNo,
+			String docWebNo) throws Exception {
 		try {
-			return bsInitiateRepository.findByRequestIdAndCustWebNo(requestId, custWebNo);
+			return bsInitiateRepository.findByRequestIdAndCustWebNoAndDocWebNo(requestId, custWebNo, docWebNo);
 		} catch (Exception e) {
 			logger.error(" error while fetching initiate bs requestId: " + requestId, e);
 			throw new Exception();

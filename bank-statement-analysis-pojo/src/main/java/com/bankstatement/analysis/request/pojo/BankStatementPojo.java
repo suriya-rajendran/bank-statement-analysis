@@ -22,11 +22,17 @@ public class BankStatementPojo implements Serializable {
 	@JsonProperty("web_ref_no")
 	private String webRefNo;
 
+	@JsonProperty("report_type")
+	private String reportType = "APPLICATION";
+
 	@JsonProperty("tenure")
 	private Integer tenure;
 
 	@JsonProperty("application_date")
 	private String applicationDate;
+	
+	@JsonProperty("process_type")
+	private String processType;
 
 	@JsonProperty("loan_amount")
 	private Double loanamount;

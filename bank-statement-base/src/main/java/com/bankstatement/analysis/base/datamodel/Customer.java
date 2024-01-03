@@ -1,7 +1,8 @@
 package com.bankstatement.analysis.base.datamodel;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -43,29 +44,22 @@ public class Customer extends BaseEntity {
 	@Column(name = "customer_response")
 	private String customerResponse;
 
-	@Column(name = "report_status")
-	@Enumerated(EnumType.STRING)
-	private REPORT_STATUS reportStatus = REPORT_STATUS.NOT_INITIATED;
+	public enum CUSTOMER_TYPE {
+		APPLICANT, CO_APPLICANT
+	}
 
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@OrderBy("id")
 	@JoinColumn(name = "customer_id")
 	@Setter(AccessLevel.NONE)
-	private List<AccountDetail> accountDetail = new ArrayList<>();
-
-	public enum CUSTOMER_TYPE {
-		APPLICANT, CO_APPLICANT
-	}
-
-	public enum REPORT_STATUS {
-		NOT_INITIATED, INITIATED, CALLBACK, REPORT_GENERATED,FAILED
-	}
+	@JsonIgnore
+	private Set<CustomerTransactionDetails> transactionDetail = new HashSet<>();
 
 	@JsonIgnore
-	public void addAccountDetails(AccountDetail env) {
+	public void addCustomerTransactionDetails(CustomerTransactionDetails env) {
 		if (env != null) {
 			try {
-				this.accountDetail.add(env);
+				this.transactionDetail.add(env);
 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -74,10 +68,10 @@ public class Customer extends BaseEntity {
 	}
 
 	@JsonIgnore
-	public void addAccountDetailsList(List<AccountDetail> env) {
+	public void addCustomerTransactionDetails(Set<CustomerTransactionDetails> env) {
 		if (!CollectionUtils.isEmpty(env)) {
 			try {
-				this.accountDetail.addAll(env);
+				this.transactionDetail.addAll(env);
 
 			} catch (Exception e) {
 				e.printStackTrace();
