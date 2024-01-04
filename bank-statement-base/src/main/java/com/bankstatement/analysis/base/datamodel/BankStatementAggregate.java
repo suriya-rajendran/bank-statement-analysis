@@ -47,10 +47,6 @@ public class BankStatementAggregate extends BaseEntity {
 	@JsonProperty("loan_amount")
 	private Double loanamount;
 
-	@Column(name = "report_type")
-	@Enumerated(EnumType.STRING)
-	private REPORT_TYPE reportType;
-
 	@Lob
 	@Column(name = "application_response")
 	private String applicationResponse;
@@ -67,10 +63,6 @@ public class BankStatementAggregate extends BaseEntity {
 	@JoinColumn(name = "aggregate_id")
 	@Setter(AccessLevel.NONE)
 	private List<Customer> customer = new ArrayList<>();
-
-	public enum REPORT_TYPE {
-		APPLICATION, MEMBER_WISE
-	}
 
 	public enum AGGREGATE_STATUS {
 		PENDING, COMPLETED

@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.persistence.EntityManager;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
@@ -28,21 +30,30 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.bankstatement.analysis.base.datamodel.AccountDetail;
 import com.bankstatement.analysis.base.datamodel.BankStatementAggregate;
 import com.bankstatement.analysis.base.datamodel.BankStatementBaseModel.STATUS;
+import com.bankstatement.analysis.base.datamodel.BankTransactionDetails.CATEGORY_TYPE;
+import com.bankstatement.analysis.base.datamodel.CustomerTransactionDetails.REPORT_STATUS;
+import com.bankstatement.analysis.base.repo.CustomerRepo;
+import com.bankstatement.analysis.base.repo.CustomerTransactionDetailsRepo;
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.datamodel.BankStatementReport;
 import com.bankstatement.analysis.base.datamodel.BankStatementTransaction;
+import com.bankstatement.analysis.base.datamodel.BankTransactionDetails;
 import com.bankstatement.analysis.base.datamodel.Customer;
 import com.bankstatement.analysis.base.datamodel.CustomerTransactionDetails;
 import com.bankstatement.analysis.base.datamodel.Document;
+import com.bankstatement.analysis.base.datamodel.BankStatementAggregate.AGGREGATE_STATUS;
 import com.bankstatement.analysis.base.service.BankStatementImpl;
 import com.bankstatement.analysis.base.service.BankStatementService;
 import com.bankstatement.analysis.base.service.FeatureService;
 import com.bankstatement.analysis.base.service.ProductService;
+import com.bankstatement.analysis.perfios.request.pojo.AccountAnalysis;
 import com.bankstatement.analysis.perfios.response.pojo.Part;
 import com.bankstatement.analysis.perfios.response.pojo.TransactionResponse;
 import com.bankstatement.analysis.perfios.response.pojo.TransactionStatusResponse;
@@ -50,6 +61,8 @@ import com.bankstatement.analysis.request.pojo.CustomException;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
 import com.bankstatement.analysis.request.pojo.TransactionStatusDetail;
 import com.bankstatement.analysis.request.pojo.TransactionStatusPojo;
+import com.bankstatement.analysis.transaction.pojo.BankAccountDetails;
+import com.bankstatement.analysis.transaction.pojo.Xn;
 import com.bankstatement.perfios.async.AsyncBankStatementService;
 import com.bankstatement.perfios.configuration.PerfiosConfiguration;
 import com.bankstatement.perfios.datamodel.PerfiosInstitutionModel;
@@ -111,6 +124,12 @@ public class PerifiosBankStatementServiceImpl implements
 	private final String[] initiateRequestType = new String[] { "netbankingFetch", "statement", "choice", "choice-all",
 			"nbf-all", "statement-all", "accountAggregator", "upload" };
 
+	@Autowired
+	CustomerRepo customerRepo;
+
+	@Autowired
+	CustomerTransactionDetailsRepo CustomerTransactionDetailsRepo;
+
 	private String createPayload(String processId, InitiateRequestPojo inputs) throws JsonProcessingException {
 
 		HashMap<String, Object> payload = new HashMap<>();
@@ -167,6 +186,9 @@ public class PerifiosBankStatementServiceImpl implements
 
 					if (bsinitiate == null) {
 						bsinitiate = new BankStatementInitiate();
+
+						featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), null,
+								"INITIATED");
 						bsinitiate.setRequestId(aggregate.getWebRefID());
 						bsinitiate.setRequestType(detail.getRequestType());
 						bsinitiate.setProcessType(aggregate.getProcessType());
@@ -188,11 +210,13 @@ public class PerifiosBankStatementServiceImpl implements
 							asyncBankStatementService.generateUploadInitiateResponse(initiateRequestPojo, bsinitiate,
 									actualPayload);
 							initiateRequestPojo.setStatus("INPROGRESS");
+							aggregate.setAggregateStatus(AGGREGATE_STATUS.COMPLETED);
 						} else {
 							String actualPayload = generateInitiateRequest(initiateRequestPojo, productCode,
 									bsinitiate);
 							generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
 							initiateRequestPojo.setStatus("INPROGRESS");
+							aggregate.setAggregateStatus(AGGREGATE_STATUS.COMPLETED);
 						}
 					}
 //					if (STATUS.COMPLETED == bsinitiate.getStatus() && valid) {
@@ -234,11 +258,10 @@ public class PerifiosBankStatementServiceImpl implements
 				initiateRequestPojo.setUrl((String) successResponse.get(TRANSACTION_URL));
 				initiateRequestPojo.setExpiry((String) successResponse.get(TRANSACTION_EXPIRES));
 				initiateRequestPojo.setStatus(STATUS.COMPLETED.toString());
-				featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "INITIATED");
 			} else {
 				bsinitiate.setStatus(STATUS.FAILED);
 				initiateRequestPojo.setStatus(STATUS.FAILED.toString());
-				featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED");
+				featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED", null);
 			}
 		}
 		bankStatementImpl.saveBankStatementInitiate(bsinitiate);
@@ -297,7 +320,11 @@ public class PerifiosBankStatementServiceImpl implements
 			InitiateRequestPojo initiateRequestPojo = new InitiateRequestPojo();
 			if (STATUS.COMPLETED == bsinitiate.getStatus() && StringUtils.isNotEmpty(bsinitiate.getResponse())) {
 				InitiateRequestPojo pojo = new InitiateRequestPojo();
+				pojo.setCustomerWebRefNo(bsinitiate.getCustWebNo());
+				pojo.setTranWebRefNo(bsinitiate.getDocWebNo());
 				pojo.setRequestType(bsinitiate.getRequestType());
+				pojo.setProcessId(bsinitiate.getProcessId());
+				pojo.setApplicationWebRefNo(bsinitiate.getRequestId());
 				BankStatementTransaction bankStatementTransaction = bankStatementImpl
 						.getBankStatementTransactionByProcessId(bsinitiate.getProcessId());
 
@@ -305,7 +332,8 @@ public class PerifiosBankStatementServiceImpl implements
 					bankStatementTransaction = new BankStatementTransaction();
 					bankStatementTransaction.setCustomProcessId(bsinitiate.getProcessId());
 					bankStatementTransaction.setProcessType(bsinitiate.getProcessType());
-
+					featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), null,
+							"CALLBACK");
 				}
 
 				if ("UPLOAD".equalsIgnoreCase(bsinitiate.getRequestType())) {
@@ -352,28 +380,25 @@ public class PerifiosBankStatementServiceImpl implements
 										&& jsonResponse.getBankStatement().getBankAccounts().getBankAccount()
 												.isComplete()) {
 									bankStatementTransaction.setStatus(STATUS.COMPLETED);
-									featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(),
-											"CALLBACK");
+
 									initiateReport(bankStatementTransaction, pojo);
 								} else {
 									bankStatementTransaction.setStatus(STATUS.FAILED);
 									bankStatementTransaction.setResponse(response.getBody());
 									featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(),
-											"FAILED");
+											"FAILED", null);
 
 								}
 
 								// SCANNED DOC
 							} else if (HttpStatus.ACCEPTED.equals(response.getStatusCode()) && response != null
 									&& response.getBody() != null) {
-								featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(),
-										"CALLBACK");
 								initiateReport(bankStatementTransaction, pojo);
 							} else {
 								bankStatementTransaction.setStatus(STATUS.FAILED);
 								bankStatementTransaction.setResponse(response.getBody());
 								featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(),
-										"FAILED");
+										"FAILED", null);
 
 							}
 
@@ -508,7 +533,7 @@ public class PerifiosBankStatementServiceImpl implements
 			// Assuming the error message is in the "message" field of the "error" object
 			JsonNode errorMessageNode = jsonNode.path("error").path("message");
 			logger.info("errorMessage {}", errorMessageNode.textValue());
-			featureService.updateCustomer(custRefNo, docWebRefNo, "FAILED");
+			featureService.updateCustomer(custRefNo, docWebRefNo, "FAILED", null);
 
 		} catch (Exception e) {
 			e.printStackTrace(); // Handle the exception according to your needs
@@ -563,6 +588,10 @@ public class PerifiosBankStatementServiceImpl implements
 			initiateRequestPojo.setRequestType(bsinitiate.getRequestType());
 			initiateRequestPojo.setTransactionId(bsinitiate.getTransactionId());
 			initiateRequestPojo.setScannedDoc(bsinitiate.isScannedDoc());
+			initiateRequestPojo.setCustomerWebRefNo(bsinitiate.getCustWebNo());
+			initiateRequestPojo.setTranWebRefNo(bsinitiate.getDocWebNo());
+			initiateRequestPojo.setProcessId(bsinitiate.getProcessId());
+			initiateRequestPojo.setApplicationWebRefNo(bsinitiate.getRequestId());
 			asyncBankStatementService.initiateAsynReport(bankStatementTransaction, initiateRequestPojo);
 		} else {
 			asyncBankStatementService.initiateAsynReport(bankStatementTransaction, extra);
@@ -689,5 +718,95 @@ public class PerifiosBankStatementServiceImpl implements
 		headers.set("X-Perfios-Signed-Headers", "host;x-perfios-content-sha256;x-perfios-date");
 		headers.set("cache-control", "no-cache");
 		return headers;
+	}
+
+	public void constructFeature(InitiateRequestPojo initiateRequestPojo) throws Exception {
+
+		BankStatementReport bankStatementReport = bankStatementImpl.getBSReportByProcessIdAndTransactionId(
+				initiateRequestPojo.getProcessId(), initiateRequestPojo.getTransactionId());
+		if (bankStatementReport != null && STATUS.COMPLETED == bankStatementReport.getStatus()
+				&& bankStatementReport.getResponse() != null) {
+
+			Customer cust = customerRepo.findByWebRefID(initiateRequestPojo.getCustomerWebRefNo());
+
+			if (cust != null) {
+				CustomerTransactionDetails vo = cust.getTransactionDetail().stream()
+						.filter(d -> d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getTranWebRefNo()))
+						.findFirst().orElse(null);
+
+				if (!CollectionUtils.isEmpty(vo.getAccountDetail())) {
+					vo.getAccountDetail().clear();
+				}
+
+				if (vo != null) {
+					JsonNode jsonNode = objectMapper.readTree(bankStatementReport.getResponse());
+
+					JsonNode accountDetails = jsonNode.get("accountXns");
+
+					List<BankAccountDetails> bankDetails = objectMapper.readValue(accountDetails.toString(),
+							new TypeReference<List<BankAccountDetails>>() {
+							});
+
+					for (BankAccountDetails det : bankDetails) {
+
+						JsonNode bankdetails = jsonNode.get("accountAnalysis");
+
+						List<AccountAnalysis> accountAnalysis = objectMapper.readValue(bankdetails.toString(),
+								new TypeReference<List<AccountAnalysis>>() {
+								});
+
+						AccountDetail accountDetail = new AccountDetail();
+
+						accountDetail.setAcNumber(det.getAccountNo());
+
+						AccountAnalysis info = accountAnalysis.stream()
+								.filter(d -> d.getAccountNo().equalsIgnoreCase(det.getAccountNo())).findAny()
+								.orElse(null);
+
+						accountDetail.setBankName(info.getSummaryInfo().getInstName());
+
+						for (Xn d : det.getXns()) {
+							BankTransactionDetails details = new BankTransactionDetails();
+							details.setDate(d.getDate());
+
+							details.setChqNo(d.getChqNo());
+
+							details.setNarration(d.getNarration());
+
+							details.setAmount(d.getAmount());
+
+							details.setOriginalCategory(d.getCategory());
+
+							details.setBalance(d.getBalance());
+
+							details.setRequestId(initiateRequestPojo.getApplicationWebRefNo());
+
+							if (d.getAmount() < 0) {
+								details.setCategoryType(CATEGORY_TYPE.OUTFLOW);
+							} else {
+								details.setCategoryType(CATEGORY_TYPE.INFLOW);
+							}
+
+							if (d.getCategory().toUpperCase().contains("Transfer To".toUpperCase())) {
+								details.setCategory("Transfer out");
+							} else if (d.getCategory().toUpperCase().contains("Transfer From".toUpperCase())) {
+								details.setCategory("Transfer in");
+							} else {
+								details.setCategory(d.getCategory());
+							}
+
+							accountDetail.addTransactionDetails(details);
+
+						}
+						logger.info("{}", accountDetail.getTransaction());
+
+						vo.addAccountDetails(accountDetail);
+					}
+					vo.setReportStatus(REPORT_STATUS.CALLBACK);
+					CustomerTransactionDetailsRepo.save(vo);
+					featureService.fetchfeatureResponse(initiateRequestPojo);
+				}
+			}
+		}
 	}
 }

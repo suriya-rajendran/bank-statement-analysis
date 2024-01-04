@@ -155,26 +155,26 @@ public class AsyncBankStatementService {
 						bsinitiate.setStatus(STATUS.COMPLETED);
 						initiateRequestPojo.setStatus(STATUS.COMPLETED.toString());
 
-						featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "INITIATED");
 //						perfiosUploadModel.setFileId(fileId);
 //						perfiosUploadModel.setTxnStatus("UPLOADED");
 //						perfiosUploadModel.setResponseDate(new Date());
 					} else {
 						bsinitiate.setStatus(STATUS.FAILED);
 						initiateRequestPojo.setStatus(STATUS.FAILED.toString());
-						featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED");
+						featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED",
+								null);
 					}
 				}
 
 			} else {
 				bsinitiate.setStatus(STATUS.FAILED);
 				initiateRequestPojo.setStatus(STATUS.FAILED.toString());
-				featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED");
+				featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED", null);
 			}
 		} catch (Exception e) {
 			bsinitiate.setStatus(STATUS.FAILED);
 			initiateRequestPojo.setStatus(STATUS.FAILED.toString());
-			featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED");
+			featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED", null);
 		}
 
 		bsInitiateRepository.save(bsinitiate);
@@ -237,11 +237,12 @@ public class AsyncBankStatementService {
 	}
 
 	@Async
-	public void initiateAsynReport(BankStatementTransaction bankStatementTransaction, Object extra) throws Exception {
-
+	public InitiateRequestPojo initiateAsynReport(BankStatementTransaction bankStatementTransaction, Object extra)
+			throws Exception {
+		InitiateRequestPojo pojo = null;
 		try {
 
-			InitiateRequestPojo pojo = InitiateRequestPojo.class.cast(extra);
+			pojo = InitiateRequestPojo.class.cast(extra);
 
 			if ("UPLOAD".equalsIgnoreCase(pojo.getRequestType())) {
 				BankStatementReport bankStatementReport = bankStatementImpl.getBSReportByProcessIdAndTransactionId(
@@ -251,6 +252,7 @@ public class AsyncBankStatementService {
 					bankStatementReport.setCustomProcessId(bankStatementTransaction.getProcessId());
 					bankStatementReport.setTransactionId(pojo.getTransactionId());
 					bankStatementReport.setProcessType(bankStatementTransaction.getProcessType());
+					featureService.updateCustomer(pojo.getCustomerWebRefNo(), pojo.getTranWebRefNo(), null, "REPORT");
 				}
 
 				if (STATUS.COMPLETED != bankStatementReport.getStatus()) {
@@ -274,6 +276,12 @@ public class AsyncBankStatementService {
 						bankStatementReport.setStatus(STATUS.PENDING);
 						bankStatementImpl.saveBankStatementReport(bankStatementReport);
 						retrieveReport(bankStatementReport, pojo);
+					} else {
+						featureService.updateCustomer(pojo.getCustomerWebRefNo(), pojo.getTranWebRefNo(), "FAILED",
+								null);
+						bankStatementReport.setStatus(STATUS.FAILED);
+						bankStatementReport.setResponse(response.getBody());
+						bankStatementImpl.saveBankStatementReport(bankStatementReport);
 					}
 
 				}
@@ -290,6 +298,8 @@ public class AsyncBankStatementService {
 						bankStatementReport.setCustomProcessId(bankStatementTransaction.getProcessId());
 						bankStatementReport.setTransactionId(vo.getPerfiosTransactionId());
 						bankStatementReport.setProcessType(bankStatementTransaction.getProcessType());
+						featureService.updateCustomer(pojo.getCustomerWebRefNo(), pojo.getTranWebRefNo(), null,
+								"REPORT");
 					}
 
 					if (STATUS.COMPLETED != bankStatementReport.getStatus()) {
@@ -311,16 +321,14 @@ public class AsyncBankStatementService {
 
 						bankStatementImpl.saveBankStatementReport(bankStatementReport);
 						if (STATUS.COMPLETED == bankStatementReport.getStatus()) {
+							pojo.setStatus("success");
 
-							BankStatementInitiate bankStatementInitiate = bankStatementImpl
-									.getBankStatementInitiateByProcessId(bankStatementTransaction.getProcessId());
-
-							featureService.constructFeature(bankStatementReport.getResponse(), bankStatementInitiate);
 						}
 					}
 
 				}
 			}
+			return pojo;
 		} catch (Exception e) {
 			logger.error("Error while report initiate ", e);
 			throw new Exception();
@@ -359,6 +367,7 @@ public class AsyncBankStatementService {
 				bankStatementReport.setResponseCode(response.getStatusCode().value() + "");
 				bankStatementReport.setResponse(response.getBody());
 				bankStatementReport.setStatus(STATUS.FAILED);
+				featureService.updateCustomer(pojo.getCustomerWebRefNo(), pojo.getTranWebRefNo(), "FAILED", null);
 			}
 
 			bankStatementImpl.saveBankStatementReport(bankStatementReport);
@@ -368,15 +377,18 @@ public class AsyncBankStatementService {
 			bankStatementReport.setStatus(STATUS.FAILED);
 			bankStatementReport.setResponse(e.getLocalizedMessage());
 			bankStatementImpl.saveBankStatementReport(bankStatementReport);
+			featureService.updateCustomer(pojo.getCustomerWebRefNo(), pojo.getTranWebRefNo(), "FAILED", null);
 
 		}
 
 		if (STATUS.COMPLETED == bankStatementReport.getStatus()) {
 
-			BankStatementInitiate bankStatementInitiate = bankStatementImpl
-					.getBankStatementInitiateByProcessId(bankStatementReport.getProcessId());
-
-			featureService.constructFeature(bankStatementReport.getResponse(), bankStatementInitiate);
+			pojo.setStatus("success");
+//
+//			BankStatementInitiate bankStatementInitiate = bankStatementImpl
+//					.getBankStatementInitiateByProcessId(bankStatementReport.getProcessId());
+//
+//			featureService.constructFeature(bankStatementReport.getResponse(), bankStatementInitiate);
 		}
 	}
 }

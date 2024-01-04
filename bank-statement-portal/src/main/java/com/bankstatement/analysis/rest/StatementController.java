@@ -146,11 +146,11 @@ public class StatementController {
 
 	}
 
-//	@PostMapping("/fetch/feature-detail")
-//	public ResponseEntity<?> fetchfeatureResponse(@RequestBody BankStatementPojo bankStatementPojo) throws Exception {
-//		return featureService.fetchfeatureResponse(bankStatementPojo);
-//
-//	}
+	@PostMapping("/fetch/feature-detail")
+	public void fetchfeatureResponse(@RequestBody InitiateRequestPojo bankStatementPojo) throws Exception {
+		featureService.fetchfeatureResponse(bankStatementPojo);
+
+	}
 
 	private String getProductCode(HttpServletRequest request) {
 		return (String) request.getAttribute("product_code");

@@ -41,4 +41,17 @@ public class PerfiosAspect {
 		}
 
 	}
+
+	@Around("execution(* com.bankstatement.perfios.async.AsyncBankStatementService.initiateAsynReport(..))")
+	public void aroundInitiateAsynReport(ProceedingJoinPoint joinPoint) throws Throwable {
+
+		Object result = joinPoint.proceed();
+		if (result instanceof InitiateRequestPojo) {
+			InitiateRequestPojo initiateRequestPojo = (InitiateRequestPojo) result;
+
+			if ("SUCCESS".equalsIgnoreCase(initiateRequestPojo.getStatus())) {
+				perifiosBankStatementServiceImpl.constructFeature(initiateRequestPojo);
+			}
+		}
+	}
 }

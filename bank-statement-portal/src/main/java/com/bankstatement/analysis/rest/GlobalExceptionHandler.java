@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleCustomException(CustomException ex) {
 		logger.info("error message: {}", ex.getErrorMessage());
 		ErrorResponse errorResponse = new ErrorResponse(ex.getErrorCode(), ex.getErrorMessage());
-		return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+		return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 	@ExceptionHandler(Exception.class)

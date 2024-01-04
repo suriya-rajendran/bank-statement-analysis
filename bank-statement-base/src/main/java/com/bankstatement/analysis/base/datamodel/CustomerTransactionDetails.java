@@ -55,7 +55,7 @@ public class CustomerTransactionDetails extends BaseEntity {
 	private REPORT_STATUS reportStatus = REPORT_STATUS.NOT_INITIATED;
 
 	public enum REPORT_STATUS {
-		NOT_INITIATED, INITIATED, CALLBACK, REPORT_GENERATED, FAILED
+		NOT_INITIATED, INITIATED, CALLBACK, REPORT
 	}
 
 	@Column(name = "transaction_status")

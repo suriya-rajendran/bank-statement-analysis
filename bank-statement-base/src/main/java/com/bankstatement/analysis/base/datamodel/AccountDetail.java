@@ -62,7 +62,7 @@ public class AccountDetail extends BaseEntity implements Serializable {
 
 	@Column(name = "account_status")
 	@Enumerated(EnumType.STRING)
-	private ACCOUNT_STATUS accountStatus;
+	private ACCOUNT_STATUS accountStatus = ACCOUNT_STATUS.INCLUDED;
 
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@OrderBy("id")
