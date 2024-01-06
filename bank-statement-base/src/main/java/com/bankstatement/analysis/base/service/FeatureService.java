@@ -107,9 +107,13 @@ public class FeatureService {
 
 			if (!CollectionUtils.isEmpty(bankStatementPojo.getCustomerList())) {
 				for (CustomerPojo vo : bankStatementPojo.getCustomerList()) {
-					// TODO update logic need to do
-					Customer customer = new Customer();
 
+					Customer customer = bankStatementAggregate.getCustomer().stream()
+							.filter(d -> d.getWebRefID().equalsIgnoreCase(vo.getCustomerWebRefNo())).findFirst()
+							.orElse(null);
+					if (customer == null) {
+						customer = new Customer();
+					}
 					customer.setCustomerReferenceNo(vo.getCustomerReferenceNo());
 
 					customer.setCustomerType(CUSTOMER_TYPE.valueOf(vo.getCustomerType().toString()));
@@ -191,9 +195,9 @@ public class FeatureService {
 //												+ accountDetail.getBankName(),
 //										accountDetail -> accountDetail, (existing, replacement) -> existing))
 								.collect(Collectors.toMap(
-				                        accountDetail -> accountDetail.getAcNumber() + "-" + accountDetail.getBankName(),
-				                        Function.identity(),
-				                        (existing, replacement) -> existing))
+										accountDetail -> accountDetail.getAcNumber() + "-"
+												+ accountDetail.getBankName(),
+										Function.identity(), (existing, replacement) -> existing))
 								.values().stream().map(AccountDetail::getTransaction).flatMap(Collection::stream)
 								.collect(Collectors.toList());
 						if (!CollectionUtils.isEmpty(details)) {
@@ -227,9 +231,8 @@ public class FeatureService {
 						.flatMap(Collection::stream).map(CustomerTransactionDetails::getAccountDetail)
 						.flatMap(Collection::stream)
 						.collect(Collectors.toMap(
-		                        accountDetail -> accountDetail.getAcNumber() + "-" + accountDetail.getBankName(),
-		                        Function.identity(),
-		                        (existing, replacement) -> existing))
+								accountDetail -> accountDetail.getAcNumber() + "-" + accountDetail.getBankName(),
+								Function.identity(), (existing, replacement) -> existing))
 						.values().stream().map(AccountDetail::getTransaction).flatMap(Collection::stream)
 						.collect(Collectors.toList());
 
