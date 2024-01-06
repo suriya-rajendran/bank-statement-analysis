@@ -79,6 +79,7 @@ public class FeatureService {
 //        // Your 'merge' operation logic here
 //    }
 
+	@Transactional
 	public BankStatementAggregate saveApplicationDetails(BankStatementPojo bankStatementPojo) throws Exception {
 
 		try {
@@ -93,24 +94,23 @@ public class FeatureService {
 				}
 			} else {
 				bankStatementAggregate = new BankStatementAggregate();
+				bankStatementAggregate.setApplicationReferenceNo(bankStatementPojo.getApplicationReferenceNo());
+
+				bankStatementAggregate.setTenure(bankStatementPojo.getTenure());
+
+				bankStatementAggregate.setLoanamount(bankStatementPojo.getLoanamount());
+
+				bankStatementAggregate.setApplicationDate(bankStatementPojo.getApplicationDate());
+
+				bankStatementAggregate.setProcessType(bankStatementPojo.getProcessType());
 			}
-
-			bankStatementAggregate.setApplicationReferenceNo(bankStatementPojo.getApplicationReferenceNo());
-
-			bankStatementAggregate.setTenure(bankStatementPojo.getTenure());
-
-			bankStatementAggregate.setLoanamount(bankStatementPojo.getLoanamount());
-
-			bankStatementAggregate.setApplicationDate(bankStatementPojo.getApplicationDate());
-
-			bankStatementAggregate.setProcessType(bankStatementPojo.getProcessType());
 
 			if (!CollectionUtils.isEmpty(bankStatementPojo.getCustomerList())) {
 				for (CustomerPojo vo : bankStatementPojo.getCustomerList()) {
 
-					Customer customer = bankStatementAggregate.getCustomer().stream()
-							.filter(d -> d.getWebRefID().equalsIgnoreCase(vo.getCustomerWebRefNo())).findFirst()
-							.orElse(null);
+					Customer customer = bankStatementAggregate.getCustomer().stream().filter(
+							d -> d.getWebRefID() != null && d.getWebRefID().equalsIgnoreCase(vo.getCustomerWebRefNo()))
+							.findFirst().orElse(null);
 					if (customer == null) {
 						customer = new Customer();
 					}
@@ -151,7 +151,8 @@ public class FeatureService {
 		if (customer != null) {
 
 			CustomerTransactionDetails vo = customer.getTransactionDetail().stream()
-					.filter(d -> d.getWebRefID().equalsIgnoreCase(tranWebRefNo)).findFirst().orElse(null);
+					.filter(d -> d.getWebRefID() != null && d.getWebRefID().equalsIgnoreCase(tranWebRefNo)).findFirst()
+					.orElse(null);
 
 			if (vo != null) {
 
@@ -181,32 +182,33 @@ public class FeatureService {
 		if (aggregate != null) {
 
 			Customer customer = aggregate.getCustomer().stream()
-					.filter(d -> d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getCustomerWebRefNo()))
+					.filter(d -> d.getWebRefID() != null
+							&& d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getCustomerWebRefNo()))
 					.findFirst().orElse(null);
 			if (customer != null) {
-				for (CustomerTransactionDetails vo : customer.getTransactionDetail()) {
-					if (TRANSACTION_STATUS.FAILED != vo.getTransactionStatus()
-							&& !CollectionUtils.isEmpty(vo.getAccountDetail())) {
-						List<BankTransactionDetails> details = new ArrayList<>();
-						details = vo.getAccountDetail().stream()
-								.filter(d -> ACCOUNT_STATUS.INCLUDED == d.getAccountStatus())
-//								.collect(Collectors.toMap(
-//										accountDetail -> accountDetail.getAcNumber() + "-"
-//												+ accountDetail.getBankName(),
-//										accountDetail -> accountDetail, (existing, replacement) -> existing))
-								.collect(Collectors.toMap(
-										accountDetail -> accountDetail.getAcNumber() + "-"
-												+ accountDetail.getBankName(),
-										Function.identity(), (existing, replacement) -> existing))
-								.values().stream().map(AccountDetail::getTransaction).flatMap(Collection::stream)
-								.collect(Collectors.toList());
-						if (!CollectionUtils.isEmpty(details)) {
-							bankTransactionDetails.addAll(details);
-							vo.setTransactionStatus(TRANSACTION_STATUS.COMPLETED);
-							customerTransactionDetailsRepo.save(vo);
-						}
-					}
+				boolean valid = false;
+				CustomerTransactionDetails vo = customer.getTransactionDetail().stream()
+						.filter(d -> TRANSACTION_STATUS.FAILED != d.getTransactionStatus()
+								&& initiateRequestPojo.getTranWebRefNo().equalsIgnoreCase(d.getWebRefID()))
+						.findFirst().orElse(null);
+				if (vo != null) {
+					vo.setTransactionStatus(TRANSACTION_STATUS.COMPLETED);
+					customerTransactionDetailsRepo.save(vo);
+
+					valid = true;
 				}
+
+				if (valid) {
+					bankTransactionDetails = customer.getTransactionDetail().stream()
+							.map(CustomerTransactionDetails::getAccountDetail).flatMap(Collection::stream)
+							.filter(d -> ACCOUNT_STATUS.INCLUDED == d.getAccountStatus())
+							.collect(Collectors.toMap(
+									accountDetail -> accountDetail.getAcNumber() + "-" + accountDetail.getBankName(),
+									Function.identity(), (existing, replacement) -> existing))
+							.values().stream().map(AccountDetail::getTransaction).flatMap(Collection::stream)
+							.collect(Collectors.toList());
+				}
+
 				if (!CollectionUtils.isEmpty(bankTransactionDetails)) {
 					customer.setCustomerResponse(objectMapper.writeValueAsString(
 							new FeatureUtil(bankTransactionDetails, aggregate.getApplicationDate())));
@@ -229,7 +231,7 @@ public class FeatureService {
 				bankTransactionDetails = new ArrayList<>();
 				bankTransactionDetails = aggregate.getCustomer().stream().map(Customer::getTransactionDetail)
 						.flatMap(Collection::stream).map(CustomerTransactionDetails::getAccountDetail)
-						.flatMap(Collection::stream)
+						.flatMap(Collection::stream).filter(d -> ACCOUNT_STATUS.INCLUDED == d.getAccountStatus())
 						.collect(Collectors.toMap(
 								accountDetail -> accountDetail.getAcNumber() + "-" + accountDetail.getBankName(),
 								Function.identity(), (existing, replacement) -> existing))
@@ -243,78 +245,8 @@ public class FeatureService {
 			}
 		}
 	}
-//
-//	@Transactional
-//	public ResponseEntity<?> fetchfeatureResponse(BankStatementPojo bankStatementPojo)
-//			throws JsonProcessingException, ParseException {
-//		String response = null;
-//
-//		List<BankTransactionDetails> bankTransactionDetails = new ArrayList<>();
-//		BankStatementAggregate aggregate = bankStatementAggregateRepo.findByWebRefID(bankStatementPojo.getWebRefNo());
-//
-//		if (aggregate != null) {
-//			for (CustomerPojo vo : bankStatementPojo.getCustomer()) {
-//				Customer customer = aggregate.getCustomer().stream()
-//						.filter(d -> d.getWebRefID().equalsIgnoreCase(vo.getCustomerWebRefNo())).findFirst()
-//						.orElse(null);
-//
-//				if (customer != null) {
-//					customer.getAccountDetail().stream().forEach(d -> {
-//						vo.getAccountPojo().stream().forEach(da -> {
-//							if (da.getAccWebRefNo().equalsIgnoreCase(d.getWebRefID())) {
-//								d.setAccountStatus(ACCOUNT_STATUS.valueOf(da.getAccountStatus().toString()));
-//
-//							}
-//						});
-//
-//					});
-//
-//					if (REPORT_TYPE.MEMBER_WISE == aggregate.getReportType()) {
-//
-//						bankTransactionDetails = customer.getAccountDetail().stream()
-//								.filter(d -> ACCOUNT_STATUS.INCLUDED == d.getAccountStatus())
-//								.map(AccountDetail::getTransaction).flatMap(Collection::stream)
-//								.collect(Collectors.toList());
-//						customer.setCustomerResponse(objectMapper.writeValueAsString(
-//								new FeatureUtil(bankTransactionDetails, aggregate.getApplicationDate())));
-//
-//						customer.setReportStatus(REPORT_STATUS.REPORT_GENERATED);
-//						response = customer.getCustomerResponse();
-//					}
-//
-//					customerRepo.save(customer);
-//				}
-//
-//			}
-//
-//			bankTransactionDetails = new ArrayList<>();
-//
-//			if (REPORT_TYPE.APPLICATION == aggregate.getReportType()) {
-//				aggregate = bankStatementAggregateRepo.findByWebRefID(bankStatementPojo.getWebRefNo());
-//
-//				if (!aggregate.getCustomer().stream().anyMatch(d -> d.getReportStatus() == REPORT_STATUS.INITIATED
-//						|| d.getReportStatus() == REPORT_STATUS.NOT_INITIATED)) {
-//
-//					bankTransactionDetails = aggregate.getCustomer().stream().map(Customer::getAccountDetail)
-//							.flatMap(Collection::stream).filter(d -> ACCOUNT_STATUS.INCLUDED == d.getAccountStatus())
-//							.map(AccountDetail::getTransaction).flatMap(Collection::stream)
-//							.collect(Collectors.toList());
-//
-//					aggregate.setApplicationResponse(objectMapper.writeValueAsString(
-//							new FeatureUtil(bankTransactionDetails, aggregate.getApplicationDate())));
-//
-//					bankStatementAggregateRepo.save(aggregate);
-//					response = aggregate.getApplicationResponse();
-//				}
-//			}
-//		} else {
-//			throw new CustomException("400", "Report Type Cannot be empty");
-//		}
-//
-//		return ResponseEntity.ok(response);
-//
-//	}
-
+ 
+	@Transactional
 	public CustomerTransactionDetails updateCustomerDetailWithTransaction(BankStatementPojo bankStatementPojo)
 			throws Exception {
 
@@ -327,13 +259,19 @@ public class FeatureService {
 				if (!CollectionUtils.isEmpty(bankStatementAggregate.getCustomer())) {
 
 					if (bankStatementPojo.getCustomer() != null) {
-						Customer vo = bankStatementAggregate.getCustomer().stream().filter(
-								d -> d.getWebRefID().equals(bankStatementPojo.getCustomer().getCustomerWebRefNo()))
+						Customer vo = bankStatementAggregate.getCustomer().stream()
+								.filter(d -> d.getWebRefID() != null && d.getWebRefID()
+										.equals(bankStatementPojo.getCustomer().getCustomerWebRefNo()))
 								.findFirst().orElse(null);
 						if (vo != null) {
 							for (CustomerTransactionPojo tran : bankStatementPojo.getCustomer().getCustomerDetail()) {
-								CustomerTransactionDetails details = new CustomerTransactionDetails();
-
+								CustomerTransactionDetails details = vo.getTransactionDetail().stream()
+										.filter(d -> tran.getWebRefNo() != null
+												&& tran.getWebRefNo().equalsIgnoreCase(d.getWebRefID()))
+										.findFirst().orElse(null);
+								if (details == null) {
+									details = new CustomerTransactionDetails();
+								}
 								details.setRequestType(tran.getType());
 
 								details.setScannedDoc(tran.isScannedDoc());
@@ -344,19 +282,14 @@ public class FeatureService {
 								doc.setImagePath(tran.getImagePath());
 								details.setDocuments(doc);
 
-								if (!StringUtils.isEmpty(tran.getWebRefNo())) {
-									CustomerTransactionDetails previousTransactionDetails = vo.getTransactionDetail()
-											.stream().filter(d -> d.getWebRefID().equalsIgnoreCase(tran.getWebRefNo()))
-											.findFirst().orElse(null);
-									if (previousTransactionDetails != null) {
-										vo.getTransactionDetail().remove(previousTransactionDetails);
-									}
-								}
+								customerTransactionDetailsRepo.save(details);
+
 								vo.setCustomerStatus(CUSTOMER_STATUS.INPROGRESS);
 								vo.addCustomerTransactionDetails(details);
 								customerRepo.save(vo);
 								return details;
 							}
+
 						}
 
 					}
@@ -392,8 +325,9 @@ public class FeatureService {
 				if (!CollectionUtils.isEmpty(bankStatementAggregate.getCustomer())) {
 
 					if (bankStatementPojo.getCustomer() != null) {
-						Customer vo = bankStatementAggregate.getCustomer().stream().filter(
-								d -> d.getWebRefID().equals(bankStatementPojo.getCustomer().getCustomerWebRefNo()))
+						Customer vo = bankStatementAggregate.getCustomer().stream()
+								.filter(d -> d.getWebRefID() != null && d.getWebRefID()
+										.equals(bankStatementPojo.getCustomer().getCustomerWebRefNo()))
 								.findFirst().orElse(null);
 						if (vo != null) {
 							for (CustomerTransactionPojo tran : bankStatementPojo.getCustomer().getCustomerDetail()) {
@@ -411,7 +345,9 @@ public class FeatureService {
 
 								if (!StringUtils.isEmpty(tran.getWebRefNo())) {
 									CustomerTransactionDetails previousTransactionDetails = vo.getTransactionDetail()
-											.stream().filter(d -> d.getWebRefID().equalsIgnoreCase(tran.getWebRefNo()))
+											.stream()
+											.filter(d -> d.getWebRefID() != null
+													&& d.getWebRefID().equalsIgnoreCase(tran.getWebRefNo()))
 											.findFirst().orElse(null);
 									if (previousTransactionDetails != null) {
 										vo.getTransactionDetail().remove(previousTransactionDetails);

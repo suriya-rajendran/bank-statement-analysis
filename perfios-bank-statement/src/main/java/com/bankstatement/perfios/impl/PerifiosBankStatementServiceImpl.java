@@ -169,11 +169,11 @@ public class PerifiosBankStatementServiceImpl implements
 
 		if (aggregate != null) {
 			Customer customer = aggregate.getCustomer().stream()
-					.filter(d -> d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getCustomerWebRefNo()))
+					.filter(d -> d.getWebRefID()!=null && d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getCustomerWebRefNo()))
 					.findFirst().orElseThrow(() -> new CustomException("400", "Invalid Customer Web Ref.No"));
 
 			CustomerTransactionDetails detail = customer.getTransactionDetail().stream()
-					.filter(d -> d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getTranWebRefNo())).findFirst()
+					.filter(d -> d.getWebRefID()!=null && d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getTranWebRefNo())).findFirst()
 					.orElseThrow(() -> new CustomException("400", "Invalid Transaction Web Ref.No"));
 
 			if (Arrays.asList(initiateRequestType).contains(detail.getRequestType().toLowerCase())) {
@@ -732,7 +732,7 @@ public class PerifiosBankStatementServiceImpl implements
 
 			if (cust != null) {
 				CustomerTransactionDetails vo = cust.getTransactionDetail().stream()
-						.filter(d -> d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getTranWebRefNo()))
+						.filter(d -> d.getWebRefID()!=null && d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getTranWebRefNo()))
 						.findFirst().orElse(null);
 
 				if (!CollectionUtils.isEmpty(vo.getAccountDetail())) {

@@ -19,7 +19,6 @@ public class CustomerPojo implements Serializable {
 	@JsonProperty("customer_reference_no")
 	private String customerReferenceNo;
 
-
 	@JsonProperty("customer_web_ref_no")
 	private String customerWebRefNo;
 
