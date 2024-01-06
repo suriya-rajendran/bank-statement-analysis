@@ -17,7 +17,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(CustomException.class)
 	public ResponseEntity<ErrorResponse> handleCustomException(CustomException ex) {
-		logger.info("error message: {}", ex.getErrorMessage());
+		logger.info("error customer message: {}", ex.getErrorMessage());
 		ErrorResponse errorResponse = new ErrorResponse(ex.getErrorCode(), ex.getErrorMessage());
 		return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
 		String errorCode = "INTERNAL_ERROR";
 		String errorMessage = "An internal error occurred. Please contact support.";
-		logger.info("error message: {} ", ex);
+		logger.info("error expection message: {} ", ex);
 		ErrorResponse errorResponse = new ErrorResponse(errorCode, errorMessage);
 		return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 	}

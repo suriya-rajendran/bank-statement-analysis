@@ -6,7 +6,10 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.persistence.Column;
 import javax.persistence.EntityManager;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -38,6 +41,7 @@ import com.bankstatement.analysis.request.pojo.CustomException;
 import com.bankstatement.analysis.request.pojo.CustomerPojo;
 import com.bankstatement.analysis.request.pojo.CustomerTransactionPojo;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -104,7 +108,7 @@ public class FeatureService {
 
 				bankStatementAggregate.setProcessType(bankStatementPojo.getProcessType());
 			}
-
+			boolean valid = false;
 			if (!CollectionUtils.isEmpty(bankStatementPojo.getCustomerList())) {
 				for (CustomerPojo vo : bankStatementPojo.getCustomerList()) {
 
@@ -113,6 +117,7 @@ public class FeatureService {
 							.findFirst().orElse(null);
 					if (customer == null) {
 						customer = new Customer();
+						valid = true;
 					}
 					customer.setCustomerReferenceNo(vo.getCustomerReferenceNo());
 
@@ -121,6 +126,11 @@ public class FeatureService {
 					bankStatementAggregate.addCustomer(customer);
 
 				}
+			}
+
+			if (valid) {
+				bankStatementAggregate.setAggregateStatus(AGGREGATE_STATUS.PENDING);
+				bankStatementAggregate.setApplicationResponse(null);
 			}
 			bankStatementAggregateRepo.save(bankStatementAggregate);
 			return bankStatementAggregate;
@@ -245,7 +255,7 @@ public class FeatureService {
 			}
 		}
 	}
- 
+
 	@Transactional
 	public CustomerTransactionDetails updateCustomerDetailWithTransaction(BankStatementPojo bankStatementPojo)
 			throws Exception {
@@ -282,10 +292,23 @@ public class FeatureService {
 								doc.setImagePath(tran.getImagePath());
 								details.setDocuments(doc);
 
+								if (TRANSACTION_STATUS.COMPLETED != details.getTransactionStatus()) {
+									details.setReportStatus(REPORT_STATUS.NOT_INITIATED);
+									details.setTransactionStatus(TRANSACTION_STATUS.INPROGRESS);
+								}
+
 								customerTransactionDetailsRepo.save(details);
 
 								vo.setCustomerStatus(CUSTOMER_STATUS.INPROGRESS);
 								vo.addCustomerTransactionDetails(details);
+
+								boolean valid = vo.getTransactionDetail().stream()
+										.anyMatch(d -> TRANSACTION_STATUS.COMPLETED == d.getTransactionStatus());
+								
+								if(!valid) {
+									vo.setCustomerResponse(null);
+								}
+
 								customerRepo.save(vo);
 								return details;
 							}
