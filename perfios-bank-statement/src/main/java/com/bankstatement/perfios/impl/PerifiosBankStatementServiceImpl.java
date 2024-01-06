@@ -128,7 +128,7 @@ public class PerifiosBankStatementServiceImpl implements
 	CustomerRepo customerRepo;
 
 	@Autowired
-	CustomerTransactionDetailsRepo CustomerTransactionDetailsRepo;
+	CustomerTransactionDetailsRepo customerTransactionDetailsRepo;
 
 	private String createPayload(String processId, InitiateRequestPojo inputs) throws JsonProcessingException {
 
@@ -179,7 +179,7 @@ public class PerifiosBankStatementServiceImpl implements
 			if (Arrays.asList(initiateRequestType).contains(detail.getRequestType().toLowerCase())) {
 
 				try {
-					boolean valid = false;
+
 					BankStatementInitiate bsinitiate = bankStatementImpl
 							.getBankStatementInitiateByRequestIdAndCustomerWebNo(aggregate.getWebRefID(),
 									customer.getWebRefID(), detail.getWebRefID());
@@ -196,7 +196,7 @@ public class PerifiosBankStatementServiceImpl implements
 								+ perfiosConfiguration.getVendorCode() + "-");
 						bsinitiate.setCustWebNo(customer.getWebRefID());
 						bsinitiate.setDocWebNo(detail.getWebRefID());
-						valid = true;
+
 					}
 					if (STATUS.COMPLETED != bsinitiate.getStatus()) {
 						bsinitiate.setApplicationDate(aggregate.getApplicationDate());
@@ -228,7 +228,7 @@ public class PerifiosBankStatementServiceImpl implements
 					throw new Exception();
 				}
 
-				return ResponseEntity.ok(initiateRequestPojo);
+				return ResponseEntity.ok(customerTransactionDetailsRepo.findByWebRefID(detail.getWebRefID()));
 			} else {
 				throw new CustomException("400", "Invalid Request Type");
 			}
@@ -646,9 +646,10 @@ public class PerifiosBankStatementServiceImpl implements
 		return "Perfios";
 	}
 
-	public List<PerfiosInstitutionModel> getInstitutionList(String operation) {
-		if ("get".equalsIgnoreCase(operation)) {
-			return perfiosInstitutionModelRepository.findAll();
+	public List<PerfiosInstitutionModel> getInstitutionList() {
+		List<PerfiosInstitutionModel> perfiosInstitutionModel = perfiosInstitutionModelRepository.findAll();
+		if (!CollectionUtils.isEmpty(perfiosInstitutionModel)) {
+			return perfiosInstitutionModel;
 		} else {
 			try {
 				perfiosInstitutionModelRepository.deleteAll();
@@ -803,7 +804,7 @@ public class PerifiosBankStatementServiceImpl implements
 						vo.addAccountDetails(accountDetail);
 					}
 					vo.setReportStatus(REPORT_STATUS.CALLBACK);
-					CustomerTransactionDetailsRepo.save(vo);
+					customerTransactionDetailsRepo.save(vo);
 					featureService.fetchfeatureResponse(initiateRequestPojo);
 				}
 			}

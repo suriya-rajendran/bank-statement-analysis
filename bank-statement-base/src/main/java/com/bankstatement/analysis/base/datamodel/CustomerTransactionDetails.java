@@ -19,6 +19,7 @@ import javax.persistence.Table;
 import org.springframework.util.CollectionUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AccessLevel;
 import lombok.Data;
@@ -41,15 +42,19 @@ public class CustomerTransactionDetails extends BaseEntity {
 	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	private Document documents;
 
+	@JsonProperty("request_type")
 	@Column(name = "request_type")
 	private String requestType;
 
+	@JsonProperty("institution_type")
 	@Column(name = "institution_type")
 	private String institutionType;
 
+	@JsonProperty("scanned_doc")
 	@Column(name = "scanned_doc")
 	private boolean scannedDoc=false;
 
+	@JsonProperty("report_status")
 	@Column(name = "report_status")
 	@Enumerated(EnumType.STRING)
 	private REPORT_STATUS reportStatus = REPORT_STATUS.NOT_INITIATED;
@@ -58,6 +63,7 @@ public class CustomerTransactionDetails extends BaseEntity {
 		NOT_INITIATED, INITIATED, CALLBACK, REPORT
 	}
 
+	@JsonProperty("transaction_status")
 	@Column(name = "transaction_status")
 	@Enumerated(EnumType.STRING)
 	private TRANSACTION_STATUS transactionStatus = TRANSACTION_STATUS.INPROGRESS;

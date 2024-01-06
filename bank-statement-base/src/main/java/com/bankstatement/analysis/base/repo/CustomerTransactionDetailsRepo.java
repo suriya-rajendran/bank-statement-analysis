@@ -6,4 +6,5 @@ import com.bankstatement.analysis.base.datamodel.CustomerTransactionDetails;
 
 public interface CustomerTransactionDetailsRepo extends JpaRepository<CustomerTransactionDetails, Long> {
 
+	CustomerTransactionDetails findByWebRefID(String webRefId);
 }

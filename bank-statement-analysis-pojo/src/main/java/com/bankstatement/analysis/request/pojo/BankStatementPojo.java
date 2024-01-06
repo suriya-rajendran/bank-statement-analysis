@@ -30,13 +30,16 @@ public class BankStatementPojo implements Serializable {
 
 	@JsonProperty("application_date")
 	private String applicationDate;
-	
+
 	@JsonProperty("process_type")
 	private String processType;
 
 	@JsonProperty("loan_amount")
 	private Double loanamount;
 
+	@JsonProperty("customer_list")
+	private List<CustomerPojo> customerList = new ArrayList<>();
+
 	@JsonProperty("customer")
-	private List<CustomerPojo> Customer = new ArrayList<>();
+	private CustomerPojo customer;
 }

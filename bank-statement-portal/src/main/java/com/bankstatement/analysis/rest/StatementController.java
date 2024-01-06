@@ -1,6 +1,6 @@
 package com.bankstatement.analysis.rest;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,12 +23,15 @@ import com.bankstatement.analysis.base.datamodel.BankStatementBaseModel.STATUS;
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
 import com.bankstatement.analysis.base.datamodel.BankStatementReport;
 import com.bankstatement.analysis.base.datamodel.BankStatementTransaction;
+import com.bankstatement.analysis.base.datamodel.Customer;
+import com.bankstatement.analysis.base.datamodel.CustomerTransactionDetails;
 import com.bankstatement.analysis.base.service.BankStatementImpl;
 import com.bankstatement.analysis.base.service.BankStatementService;
 import com.bankstatement.analysis.base.service.FeatureService;
 import com.bankstatement.analysis.request.pojo.BankStatementPojo;
 import com.bankstatement.analysis.request.pojo.CustomException;
 import com.bankstatement.analysis.request.pojo.InitiateRequestPojo;
+import com.bankstatement.perfios.datamodel.PerfiosInstitutionModel;
 import com.bankstatement.perfios.impl.PerifiosBankStatementServiceImpl;
 
 @RestController
@@ -66,11 +68,27 @@ public class StatementController {
 
 	}
 
-	@PostMapping("/update-customer-detail")
-	public HashMap<String, String> updateCustomerDetail(HttpServletRequest request,
+	@GetMapping("/customer-detail")
+	public Customer getCustomerDetails(HttpServletRequest request, @RequestParam(value = "web_ref_id") String webRefId)
+			throws Exception {
+
+		return featureService.getCustomerDetails(webRefId);
+
+	}
+
+	@PostMapping("/update-transaction-detail")
+	public CustomerTransactionDetails updateCustomerDetailWithTransaction(HttpServletRequest request,
 			@RequestBody BankStatementPojo bankStatementPojo) throws Exception {
 
-		return featureService.updateCustomerDetail(bankStatementPojo);
+		return featureService.updateCustomerDetailWithTransaction(bankStatementPojo);
+
+	}
+
+	@PostMapping("/update-multi-transaction-detail")
+	public Customer updateCustomerDetailWithMultiTransaction(HttpServletRequest request,
+			@RequestBody BankStatementPojo bankStatementPojo) throws Exception {
+
+		return featureService.updateCustomerDetailWithMultiTransaction(bankStatementPojo);
 
 	}
 
@@ -165,6 +183,12 @@ public class StatementController {
 		}
 
 		return null;
+
+	}
+
+	@GetMapping("/fetch/perfios-institution-detail")
+	public List<PerfiosInstitutionModel> fetchPerfiosInstitutionDetail() throws Exception {
+		return perifiosBankStatementServiceImpl.getInstitutionList();
 
 	}
 

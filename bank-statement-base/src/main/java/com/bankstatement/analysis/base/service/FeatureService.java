@@ -2,17 +2,17 @@ package com.bankstatement.analysis.base.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.ParseException;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -23,6 +23,7 @@ import com.bankstatement.analysis.base.datamodel.BankStatementAggregate;
 import com.bankstatement.analysis.base.datamodel.BankStatementAggregate.AGGREGATE_STATUS;
 import com.bankstatement.analysis.base.datamodel.BankTransactionDetails;
 import com.bankstatement.analysis.base.datamodel.Customer;
+import com.bankstatement.analysis.base.datamodel.Customer.CUSTOMER_STATUS;
 import com.bankstatement.analysis.base.datamodel.Customer.CUSTOMER_TYPE;
 import com.bankstatement.analysis.base.datamodel.CustomerTransactionDetails;
 import com.bankstatement.analysis.base.datamodel.CustomerTransactionDetails.REPORT_STATUS;
@@ -104,8 +105,8 @@ public class FeatureService {
 
 			bankStatementAggregate.setProcessType(bankStatementPojo.getProcessType());
 
-			if (!CollectionUtils.isEmpty(bankStatementPojo.getCustomer())) {
-				for (CustomerPojo vo : bankStatementPojo.getCustomer()) {
+			if (!CollectionUtils.isEmpty(bankStatementPojo.getCustomerList())) {
+				for (CustomerPojo vo : bankStatementPojo.getCustomerList()) {
 					// TODO update logic need to do
 					Customer customer = new Customer();
 
@@ -134,12 +135,22 @@ public class FeatureService {
 
 	}
 
+	public Customer getCustomerDetails(String webRefId) {
+		return customerRepo.findByWebRefID(webRefId);
+
+	}
+
 	public void updateCustomer(String custWebRefNo, String tranWebRefNo, String status, String repStatus) {
 
 		Customer customer = customerRepo.findByWebRefID(custWebRefNo);
 
 		if (customer != null) {
-			for (CustomerTransactionDetails vo : customer.getTransactionDetail()) {
+
+			CustomerTransactionDetails vo = customer.getTransactionDetail().stream()
+					.filter(d -> d.getWebRefID().equalsIgnoreCase(tranWebRefNo)).findFirst().orElse(null);
+
+			if (vo != null) {
+
 				if (!org.apache.commons.lang.StringUtils.isEmpty(status)) {
 					vo.setTransactionStatus(TRANSACTION_STATUS.valueOf(status));
 				}
@@ -147,8 +158,10 @@ public class FeatureService {
 				if (!org.apache.commons.lang.StringUtils.isEmpty(repStatus)) {
 					vo.setReportStatus(REPORT_STATUS.valueOf(repStatus));
 				}
+
+				customerTransactionDetailsRepo.save(vo);
 			}
-			customerRepo.save(customer);
+
 		}
 
 	}
@@ -173,7 +186,15 @@ public class FeatureService {
 						List<BankTransactionDetails> details = new ArrayList<>();
 						details = vo.getAccountDetail().stream()
 								.filter(d -> ACCOUNT_STATUS.INCLUDED == d.getAccountStatus())
-								.map(AccountDetail::getTransaction).flatMap(Collection::stream)
+//								.collect(Collectors.toMap(
+//										accountDetail -> accountDetail.getAcNumber() + "-"
+//												+ accountDetail.getBankName(),
+//										accountDetail -> accountDetail, (existing, replacement) -> existing))
+								.collect(Collectors.toMap(
+				                        accountDetail -> accountDetail.getAcNumber() + "-" + accountDetail.getBankName(),
+				                        Function.identity(),
+				                        (existing, replacement) -> existing))
+								.values().stream().map(AccountDetail::getTransaction).flatMap(Collection::stream)
 								.collect(Collectors.toList());
 						if (!CollectionUtils.isEmpty(details)) {
 							bankTransactionDetails.addAll(details);
@@ -185,6 +206,11 @@ public class FeatureService {
 				if (!CollectionUtils.isEmpty(bankTransactionDetails)) {
 					customer.setCustomerResponse(objectMapper.writeValueAsString(
 							new FeatureUtil(bankTransactionDetails, aggregate.getApplicationDate())));
+
+					customer.setCustomerStatus(customer.getTransactionDetail().stream().allMatch(
+							d -> TRANSACTION_STATUS.COMPLETED == d.getTransactionStatus()) ? CUSTOMER_STATUS.COMPLETED
+									: CUSTOMER_STATUS.INPROGRESS);
+
 					customerRepo.save(customer);
 					aggregate = bankStatementAggregateRepo.findByWebRefID(initiateRequestPojo.getApplicationWebRefNo());
 
@@ -199,7 +225,12 @@ public class FeatureService {
 				bankTransactionDetails = new ArrayList<>();
 				bankTransactionDetails = aggregate.getCustomer().stream().map(Customer::getTransactionDetail)
 						.flatMap(Collection::stream).map(CustomerTransactionDetails::getAccountDetail)
-						.flatMap(Collection::stream).map(AccountDetail::getTransaction).flatMap(Collection::stream)
+						.flatMap(Collection::stream)
+						.collect(Collectors.toMap(
+		                        accountDetail -> accountDetail.getAcNumber() + "-" + accountDetail.getBankName(),
+		                        Function.identity(),
+		                        (existing, replacement) -> existing))
+						.values().stream().map(AccountDetail::getTransaction).flatMap(Collection::stream)
 						.collect(Collectors.toList());
 
 				aggregate.setApplicationResponse(objectMapper
@@ -281,8 +312,8 @@ public class FeatureService {
 //
 //	}
 
-	public HashMap<String, String> updateCustomerDetail(BankStatementPojo bankStatementPojo) throws Exception {
-		HashMap<String, String> response = new HashMap<>();
+	public CustomerTransactionDetails updateCustomerDetailWithTransaction(BankStatementPojo bankStatementPojo)
+			throws Exception {
 
 		try {
 			BankStatementAggregate bankStatementAggregate = bankStatementAggregateRepo
@@ -291,12 +322,13 @@ public class FeatureService {
 			if (bankStatementAggregate != null) {
 
 				if (!CollectionUtils.isEmpty(bankStatementAggregate.getCustomer())) {
-					for (Customer vo : bankStatementAggregate.getCustomer()) {
-						CustomerPojo customerPojo = bankStatementPojo.getCustomer().stream()
-								.filter(d -> d.getCustomerWebRefNo().equalsIgnoreCase(vo.getWebRefID())).findFirst()
-								.orElse(null);
-						if (customerPojo != null) {
-							for (CustomerTransactionPojo tran : customerPojo.getCustomerDetail()) {
+
+					if (bankStatementPojo.getCustomer() != null) {
+						Customer vo = bankStatementAggregate.getCustomer().stream().filter(
+								d -> d.getWebRefID().equals(bankStatementPojo.getCustomer().getCustomerWebRefNo()))
+								.findFirst().orElse(null);
+						if (vo != null) {
+							for (CustomerTransactionPojo tran : bankStatementPojo.getCustomer().getCustomerDetail()) {
 								CustomerTransactionDetails details = new CustomerTransactionDetails();
 
 								details.setRequestType(tran.getType());
@@ -308,21 +340,101 @@ public class FeatureService {
 								Document doc = new Document();
 								doc.setImagePath(tran.getImagePath());
 								details.setDocuments(doc);
+
+								if (!StringUtils.isEmpty(tran.getWebRefNo())) {
+									CustomerTransactionDetails previousTransactionDetails = vo.getTransactionDetail()
+											.stream().filter(d -> d.getWebRefID().equalsIgnoreCase(tran.getWebRefNo()))
+											.findFirst().orElse(null);
+									if (previousTransactionDetails != null) {
+										vo.getTransactionDetail().remove(previousTransactionDetails);
+									}
+								}
+								vo.setCustomerStatus(CUSTOMER_STATUS.INPROGRESS);
 								vo.addCustomerTransactionDetails(details);
+								customerRepo.save(vo);
+								return details;
 							}
-							customerRepo.save(vo);
 						}
 
 					}
+
 				}
 
 			} else {
 				throw new CustomException("400", " Invalid WebRef No ");
 			}
-			response.put("status", "successful");
 
-			return response;
-		} catch (Exception e) {
+			return null;
+		} catch (
+
+		Exception e) {
+			logger.info("exception occured {}", e);
+			if (e instanceof CustomException) {
+				CustomException ex = (CustomException) e;
+				throw new CustomException(ex.getErrorCode(), ex.getErrorMessage());
+			}
+			throw new Exception();
+		}
+
+	}
+
+	public Customer updateCustomerDetailWithMultiTransaction(BankStatementPojo bankStatementPojo) throws Exception {
+
+		try {
+			BankStatementAggregate bankStatementAggregate = bankStatementAggregateRepo
+					.findByWebRefID(bankStatementPojo.getWebRefNo());
+
+			if (bankStatementAggregate != null) {
+
+				if (!CollectionUtils.isEmpty(bankStatementAggregate.getCustomer())) {
+
+					if (bankStatementPojo.getCustomer() != null) {
+						Customer vo = bankStatementAggregate.getCustomer().stream().filter(
+								d -> d.getWebRefID().equals(bankStatementPojo.getCustomer().getCustomerWebRefNo()))
+								.findFirst().orElse(null);
+						if (vo != null) {
+							for (CustomerTransactionPojo tran : bankStatementPojo.getCustomer().getCustomerDetail()) {
+								CustomerTransactionDetails details = new CustomerTransactionDetails();
+
+								details.setRequestType(tran.getType());
+
+								details.setScannedDoc(tran.isScannedDoc());
+
+								details.setInstitutionType(tran.getInstitutionType());
+
+								Document doc = new Document();
+								doc.setImagePath(tran.getImagePath());
+								details.setDocuments(doc);
+
+								if (!StringUtils.isEmpty(tran.getWebRefNo())) {
+									CustomerTransactionDetails previousTransactionDetails = vo.getTransactionDetail()
+											.stream().filter(d -> d.getWebRefID().equalsIgnoreCase(tran.getWebRefNo()))
+											.findFirst().orElse(null);
+									if (previousTransactionDetails != null) {
+										vo.getTransactionDetail().remove(previousTransactionDetails);
+									}
+								}
+
+								vo.addCustomerTransactionDetails(details);
+
+							}
+							vo.setCustomerStatus(CUSTOMER_STATUS.INPROGRESS);
+							customerRepo.save(vo);
+							return vo;
+						}
+
+					}
+
+				}
+
+			} else {
+				throw new CustomException("400", " Invalid WebRef No ");
+			}
+
+			return null;
+		} catch (
+
+		Exception e) {
 			logger.info("exception occured {}", e);
 			if (e instanceof CustomException) {
 				CustomException ex = (CustomException) e;

@@ -48,12 +48,15 @@ public class BankStatementAggregate extends BaseEntity {
 	private Double loanamount;
 
 	@Lob
+	@JsonProperty("application_response")
 	@Column(name = "application_response")
 	private String applicationResponse;
 
+	@JsonProperty("application_date")
 	@Column(name = "application_date")
 	private String applicationDate;
 
+	@JsonProperty("aggregate_status")
 	@Column(name = "aggregate_status")
 	@Enumerated(EnumType.STRING)
 	private AGGREGATE_STATUS aggregateStatus = AGGREGATE_STATUS.PENDING;

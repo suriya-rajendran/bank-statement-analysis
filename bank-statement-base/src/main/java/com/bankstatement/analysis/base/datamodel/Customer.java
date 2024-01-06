@@ -18,6 +18,7 @@ import javax.persistence.Table;
 
 import org.springframework.util.CollectionUtils;
 
+import com.bankstatement.analysis.base.datamodel.CustomerTransactionDetails.TRANSACTION_STATUS;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -36,11 +37,13 @@ public class Customer extends BaseEntity {
 	@JsonProperty("customer_reference_no")
 	private String customerReferenceNo;
 
+	@JsonProperty("customer_type")
 	@Column(name = "customer_type")
 	@Enumerated(EnumType.STRING)
 	private CUSTOMER_TYPE customerType;
 
 	@Lob
+	@JsonProperty("customer_response")
 	@Column(name = "customer_response")
 	private String customerResponse;
 
@@ -52,8 +55,17 @@ public class Customer extends BaseEntity {
 	@OrderBy("id")
 	@JoinColumn(name = "customer_id")
 	@Setter(AccessLevel.NONE)
-	@JsonIgnore
+	@JsonProperty("transaction_detail")
 	private Set<CustomerTransactionDetails> transactionDetail = new HashSet<>();
+
+	@JsonProperty("customer_status")
+	@Column(name = "customer_status")
+	@Enumerated(EnumType.STRING)
+	private CUSTOMER_STATUS customerStatus = CUSTOMER_STATUS.INPROGRESS;
+
+	public enum CUSTOMER_STATUS {
+		INPROGRESS, COMPLETED
+	}
 
 	@JsonIgnore
 	public void addCustomerTransactionDetails(CustomerTransactionDetails env) {

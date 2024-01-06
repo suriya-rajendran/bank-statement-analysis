@@ -21,6 +21,9 @@ public class CustomerTransactionPojo {
 	@JsonProperty("institution_type")
 	private String institutionType;
 
+	@JsonProperty("web_ref_no")
+	private String webRefNo;
+
 	@JsonProperty("image_path")
 	private String imagePath;
 
