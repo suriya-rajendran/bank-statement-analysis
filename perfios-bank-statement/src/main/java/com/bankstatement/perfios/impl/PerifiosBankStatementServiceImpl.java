@@ -39,6 +39,7 @@ import com.bankstatement.analysis.base.datamodel.BankStatementAggregate;
 import com.bankstatement.analysis.base.datamodel.BankStatementBaseModel.STATUS;
 import com.bankstatement.analysis.base.datamodel.BankTransactionDetails.CATEGORY_TYPE;
 import com.bankstatement.analysis.base.datamodel.CustomerTransactionDetails.REPORT_STATUS;
+import com.bankstatement.analysis.base.repo.BSInitiateRepository;
 import com.bankstatement.analysis.base.repo.CustomerRepo;
 import com.bankstatement.analysis.base.repo.CustomerTransactionDetailsRepo;
 import com.bankstatement.analysis.base.datamodel.BankStatementInitiate;
@@ -128,6 +129,9 @@ public class PerifiosBankStatementServiceImpl implements
 	CustomerRepo customerRepo;
 
 	@Autowired
+	BSInitiateRepository bsInitiateRepository;
+
+	@Autowired
 	CustomerTransactionDetailsRepo customerTransactionDetailsRepo;
 
 	private String createPayload(String processId, InitiateRequestPojo inputs) throws JsonProcessingException {
@@ -145,10 +149,11 @@ public class PerifiosBankStatementServiceImpl implements
 		payload.put("acceptancePolicy", "atLeastOneTransactionInRange");
 
 		payload.put("returnUrl", perfiosConfiguration.getReturnUrl());
-		if (!StringUtils.isEmpty(inputs.getYearMonthFrom())) {
+
+		if (inputs.getYearMonthFrom() != null && !inputs.getYearMonthFrom().isEmpty()) {
 			payload.put("yearMonthFrom", inputs.getYearMonthFrom());
 		}
-		if (!StringUtils.isEmpty(inputs.getYearMonthTo())) {
+		if (inputs.getYearMonthTo() != null && !inputs.getYearMonthTo().isEmpty()) {
 			payload.put("yearMonthTo", inputs.getYearMonthTo());
 		}
 
@@ -169,14 +174,17 @@ public class PerifiosBankStatementServiceImpl implements
 
 		if (aggregate != null) {
 			Customer customer = aggregate.getCustomer().stream()
-					.filter(d -> d.getWebRefID()!=null && d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getCustomerWebRefNo()))
+					.filter(d -> d.getWebRefID() != null
+							&& d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getCustomerWebRefNo()))
 					.findFirst().orElseThrow(() -> new CustomException("400", "Invalid Customer Web Ref.No"));
 
 			CustomerTransactionDetails detail = customer.getTransactionDetail().stream()
-					.filter(d -> d.getWebRefID()!=null && d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getTranWebRefNo())).findFirst()
-					.orElseThrow(() -> new CustomException("400", "Invalid Transaction Web Ref.No"));
+					.filter(d -> d.getWebRefID() != null
+							&& d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getTranWebRefNo()))
+					.findFirst().orElseThrow(() -> new CustomException("400", "Invalid Transaction Web Ref.No"));
 
-			if (Arrays.asList(initiateRequestType).contains(detail.getRequestType().toLowerCase())) {
+			if (Arrays.asList(initiateRequestType).stream()
+					.anyMatch(d -> d.equalsIgnoreCase(detail.getRequestType()))) {
 
 				try {
 
@@ -209,14 +217,15 @@ public class PerifiosBankStatementServiceImpl implements
 							String actualPayload = generateUploadInitiateRequest(initiateRequestPojo, bsinitiate);
 							asyncBankStatementService.generateUploadInitiateResponse(initiateRequestPojo, bsinitiate,
 									actualPayload);
-							initiateRequestPojo.setStatus("INPROGRESS");
-							aggregate.setAggregateStatus(AGGREGATE_STATUS.COMPLETED);
 						} else {
+							detail.setLink("");
+							detail.setExpiry("");
+
+							initiateRequestPojo.setRequestType(detail.getRequestType());
 							String actualPayload = generateInitiateRequest(initiateRequestPojo, productCode,
 									bsinitiate);
-							generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
-							initiateRequestPojo.setStatus("INPROGRESS");
-							aggregate.setAggregateStatus(AGGREGATE_STATUS.COMPLETED);
+							saveInitiateResponse(initiateRequestPojo, detail, bsinitiate, actualPayload);
+
 						}
 					}
 //					if (STATUS.COMPLETED == bsinitiate.getStatus() && valid) {
@@ -238,40 +247,67 @@ public class PerifiosBankStatementServiceImpl implements
 		}
 	}
 
+	public InitiateRequestPojo saveInitiateResponse(InitiateRequestPojo initiateRequestPojo, CustomerTransactionDetails detail,
+			BankStatementInitiate bsinitiate, String actualPayload) throws Exception {
+		generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
+
+		if (!StringUtils.isEmpty(initiateRequestPojo.getUrl())) {
+			detail=customerTransactionDetailsRepo.findByWebRefID(detail.getWebRefID());
+			detail.setLink(initiateRequestPojo.getUrl());
+			detail.setExpiry(initiateRequestPojo.getExpiry());
+			customerTransactionDetailsRepo.save(detail);
+		}
+		return initiateRequestPojo;
+	}
+
 	private void generateInitiateResponse(InitiateRequestPojo initiateRequestPojo, BankStatementInitiate bsinitiate,
 			String actualPayload) throws Exception {
-		HttpResponse httpResponse = perfiosHelper.executeRequest(HttpPost.class,
-				perfiosConfiguration.getInitTransactionUrl(), actualPayload, CONTENT_TYPE, null, null);
-		String responseBody = EntityUtils.toString(httpResponse.getEntity());
-		logger.debug("response body {} ", responseBody);
-		if (httpResponse.getStatusLine().getStatusCode() == 200) {
-			JSONObject xmlJSONObj = XML.toJSONObject(responseBody);
+		try {
+			HttpResponse httpResponse = perfiosHelper.executeRequest(HttpPost.class,
+					perfiosConfiguration.getInitTransactionUrl(), actualPayload, CONTENT_TYPE, null, null);
+			String responseBody = EntityUtils.toString(httpResponse.getEntity());
+			logger.debug("response body {} ", responseBody);
+			if (httpResponse.getStatusLine().getStatusCode() == 200) {
+				JSONObject xmlJSONObj = XML.toJSONObject(responseBody);
 
-			bsinitiate.setResponse(xmlJSONObj.toString());
-			bsinitiate.setResponseCode(String.valueOf(httpResponse.getStatusLine().getStatusCode()));
-			Map<String, Object> response = objectMapper.readValue(xmlJSONObj.toString(),
-					new TypeReference<Map<String, Object>>() {
-					});
-			if (response != null && response.containsKey(SUCCESS_RESPONSE)) {
-				Map<String, Object> successResponse = (Map<String, Object>) response.get(SUCCESS_RESPONSE);
-				bsinitiate.setStatus(STATUS.COMPLETED);
-				initiateRequestPojo.setUrl((String) successResponse.get(TRANSACTION_URL));
-				initiateRequestPojo.setExpiry((String) successResponse.get(TRANSACTION_EXPIRES));
-				initiateRequestPojo.setStatus(STATUS.COMPLETED.toString());
-			} else {
-				bsinitiate.setStatus(STATUS.FAILED);
-				initiateRequestPojo.setStatus(STATUS.FAILED.toString());
-				featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED", null);
+				bsinitiate.setResponse(xmlJSONObj.toString());
+				bsinitiate.setResponseCode(String.valueOf(httpResponse.getStatusLine().getStatusCode()));
+				Map<String, Object> response = objectMapper.readValue(xmlJSONObj.toString(),
+						new TypeReference<Map<String, Object>>() {
+						});
+				if (response != null && response.containsKey(SUCCESS_RESPONSE)) {
+					Map<String, Object> successResponse = (Map<String, Object>) response.get(SUCCESS_RESPONSE);
+					bsinitiate.setStatus(STATUS.COMPLETED);
+					initiateRequestPojo.setUrl((String) successResponse.get(TRANSACTION_URL));
+					initiateRequestPojo.setExpiry((String) successResponse.get(TRANSACTION_EXPIRES));
+					initiateRequestPojo.setStatus(STATUS.COMPLETED.toString());
+				} else {
+					bsinitiate.setStatus(STATUS.FAILED);
+					initiateRequestPojo.setStatus(STATUS.FAILED.toString());
+					featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED", null);
+				}
 			}
+			bsInitiateRepository.save(bsinitiate);
+//			bankStatementImpl.saveBankStatementInitiate(bsinitiate);
+			initiateRequestPojo.setProcessId(bsinitiate.getProcessId());
+		} catch (Exception e) {
+			logger.debug("generateInitiateResponse error occured {} ", e);
+			featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED", null);
+
 		}
-		bankStatementImpl.saveBankStatementInitiate(bsinitiate);
-		initiateRequestPojo.setProcessId(bsinitiate.getProcessId());
 	}
 
 	private String generateInitiateRequest(InitiateRequestPojo initiateRequestPojo, String productCode,
 			BankStatementInitiate bsinitiate) throws Exception {
 //		bsinitiate.setProductCode(productCode);
 		bsinitiate.setRequestType(initiateRequestPojo.getRequestType());
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM");
+		LocalDate currentDate = LocalDate.now();
+		LocalDate minusOne = currentDate.minusMonths(12);
+		String yearMonthFrom = format.format(java.sql.Date.valueOf(minusOne));
+		String yearMonthTo = format.format(java.sql.Date.valueOf(currentDate.minusMonths(1)));
+		initiateRequestPojo.setYearMonthFrom(yearMonthFrom);
+		initiateRequestPojo.setYearMonthTo(yearMonthTo);
 
 		String payload = createPayload(bsinitiate.getProcessId(), initiateRequestPojo);
 		JSONObject json = new JSONObject(payload);
@@ -332,9 +368,10 @@ public class PerifiosBankStatementServiceImpl implements
 					bankStatementTransaction = new BankStatementTransaction();
 					bankStatementTransaction.setCustomProcessId(bsinitiate.getProcessId());
 					bankStatementTransaction.setProcessType(bsinitiate.getProcessType());
-					featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), null,
-							"CALLBACK");
+					
 				}
+				featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), null,
+						"CALLBACK");
 
 				if ("UPLOAD".equalsIgnoreCase(bsinitiate.getRequestType())) {
 					pojo.setTransactionId(bsinitiate.getTransactionId());
@@ -732,7 +769,8 @@ public class PerifiosBankStatementServiceImpl implements
 
 			if (cust != null) {
 				CustomerTransactionDetails vo = cust.getTransactionDetail().stream()
-						.filter(d -> d.getWebRefID()!=null && d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getTranWebRefNo()))
+						.filter(d -> d.getWebRefID() != null
+								&& d.getWebRefID().equalsIgnoreCase(initiateRequestPojo.getTranWebRefNo()))
 						.findFirst().orElse(null);
 
 				if (!CollectionUtils.isEmpty(vo.getAccountDetail())) {

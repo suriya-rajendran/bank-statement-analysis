@@ -50,9 +50,15 @@ public class CustomerTransactionDetails extends BaseEntity {
 	@Column(name = "institution_type")
 	private String institutionType;
 
+	@Column(name = "link")
+	private String link;
+	
+	@Column(name = "expiry")
+	private String expiry;
+
 	@JsonProperty("scanned_doc")
 	@Column(name = "scanned_doc")
-	private boolean scannedDoc=false;
+	private boolean scannedDoc = false;
 
 	@JsonProperty("report_status")
 	@Column(name = "report_status")

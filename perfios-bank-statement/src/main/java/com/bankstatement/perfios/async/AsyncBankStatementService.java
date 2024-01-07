@@ -255,8 +255,8 @@ public class AsyncBankStatementService {
 					bankStatementReport.setCustomProcessId(bankStatementTransaction.getProcessId());
 					bankStatementReport.setTransactionId(pojo.getTransactionId());
 					bankStatementReport.setProcessType(bankStatementTransaction.getProcessType());
-					featureService.updateCustomer(pojo.getCustomerWebRefNo(), pojo.getTranWebRefNo(), null, "REPORT");
 				}
+				featureService.updateCustomer(pojo.getCustomerWebRefNo(), pojo.getTranWebRefNo(), null, "REPORT");
 
 				if (STATUS.COMPLETED != bankStatementReport.getStatus()) {
 
@@ -301,10 +301,11 @@ public class AsyncBankStatementService {
 						bankStatementReport.setCustomProcessId(bankStatementTransaction.getProcessId());
 						bankStatementReport.setTransactionId(vo.getPerfiosTransactionId());
 						bankStatementReport.setProcessType(bankStatementTransaction.getProcessType());
-						featureService.updateCustomer(pojo.getCustomerWebRefNo(), pojo.getTranWebRefNo(), null,
-								"REPORT");
+					
 					}
-
+					featureService.updateCustomer(pojo.getCustomerWebRefNo(), pojo.getTranWebRefNo(), null,
+							"REPORT");
+					pojo.setTransactionId(vo.getPerfiosTransactionId());
 					if (STATUS.COMPLETED != bankStatementReport.getStatus()) {
 
 						String payload = createRetrieveReportPayload(bankStatementReport.getTransactionId(),
@@ -325,7 +326,7 @@ public class AsyncBankStatementService {
 						bankStatementImpl.saveBankStatementReport(bankStatementReport);
 						if (STATUS.COMPLETED == bankStatementReport.getStatus()) {
 							pojo.setStatus("success");
-
+							break;
 						}
 					}
 
