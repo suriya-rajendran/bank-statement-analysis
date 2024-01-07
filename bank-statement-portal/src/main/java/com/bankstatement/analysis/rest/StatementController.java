@@ -112,11 +112,11 @@ public class StatementController {
 
 	@SuppressWarnings("unchecked")
 	@GetMapping("/fetch/initate-detail")
-	public ResponseEntity<?> fetchTransactionDetails(@RequestParam(value = "process_id") String processId)
+	public ResponseEntity<?> fetchTransactionDetails(@RequestParam(value = "transaction_web_ref_id") String docWebRefNo)
 			throws Exception {
-		if (StringUtils.isNotEmpty(processId)) {
+		if (StringUtils.isNotEmpty(docWebRefNo)) {
 			BankStatementInitiate bankStatementInitiate = bankStatementImpl
-					.getBankStatementInitiateByProcessId(processId);
+					.getBankStatementInitiateByDocWebRefId(docWebRefNo);
 			if (bankStatementInitiate != null) {
 				return composeProperties(bankStatementInitiate.getProcessType())
 						.transactionStatus(bankStatementInitiate);

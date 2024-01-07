@@ -204,6 +204,7 @@ public class PerifiosBankStatementServiceImpl implements
 						bsinitiate.setDocWebNo(detail.getWebRefID());
 
 					}
+					
 					if (STATUS.COMPLETED != bsinitiate.getStatus()) {
 						featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), null,
 								"INITIATED");

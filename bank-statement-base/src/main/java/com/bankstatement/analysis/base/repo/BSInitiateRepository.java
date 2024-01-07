@@ -11,4 +11,6 @@ public interface BSInitiateRepository extends JpaRepository<BankStatementInitiat
 
 	BankStatementInitiate findByProcessId(String processId);
 
+	BankStatementInitiate findByDocWebNo(String docWebNo);
+
 }

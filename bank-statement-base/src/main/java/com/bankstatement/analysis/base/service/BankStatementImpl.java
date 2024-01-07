@@ -98,6 +98,16 @@ public class BankStatementImpl {
 		}
 
 	}
+	
+	public BankStatementInitiate getBankStatementInitiateByDocWebRefId(String processId) throws Exception {
+		try {
+			return bsInitiateRepository.findByDocWebNo(processId);
+		} catch (Exception e) {
+			logger.error(" error while fetching initiate bs processId: " + processId, e);
+			throw new Exception();
+		}
+
+	}
 
 	@org.springframework.transaction.annotation.Transactional(propagation = Propagation.REQUIRED, readOnly = false)
 	public BankStatementTransaction saveBankStatementTransaction(BankStatementTransaction bankStatementTransaction)

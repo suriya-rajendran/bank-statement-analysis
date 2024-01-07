@@ -62,7 +62,7 @@ public class ExternalRestController {
 			BankStatementInitiate bankStatementInitiate = bankStatementImpl
 					.getBankStatementInitiateByProcessId(processId);
 			if (bankStatementInitiate != null) {
-				if ("Perifios".equalsIgnoreCase(bankStatementInitiate.getProcessType())) {
+				if ("Perfios".equalsIgnoreCase(bankStatementInitiate.getProcessType())) {
 					ResponseEntity<?> transactionStatusPojo = perifiosBankStatementServiceImpl
 							.transactionStatus(bankStatementInitiate);
 					if (HttpStatus.OK == transactionStatusPojo.getStatusCode()) {
