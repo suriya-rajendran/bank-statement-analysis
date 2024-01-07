@@ -187,8 +187,6 @@ public class PerifiosBankStatementServiceImpl implements
 					if (bsinitiate == null) {
 						bsinitiate = new BankStatementInitiate();
 
-						featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), null,
-								"INITIATED");
 						bsinitiate.setRequestId(aggregate.getWebRefID());
 						bsinitiate.setRequestType(detail.getRequestType());
 						bsinitiate.setProcessType(aggregate.getProcessType());
@@ -199,6 +197,8 @@ public class PerifiosBankStatementServiceImpl implements
 
 					}
 					if (STATUS.COMPLETED != bsinitiate.getStatus()) {
+						featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), null,
+								"INITIATED");
 						bsinitiate.setApplicationDate(aggregate.getApplicationDate());
 
 						initiateRequestPojo.setFileName(detail.getDocuments().getImagePath());

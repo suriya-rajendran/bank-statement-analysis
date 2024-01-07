@@ -167,11 +167,14 @@ public class AsyncBankStatementService {
 				}
 
 			} else {
+				bsinitiate.setResponse(response.getStatusCode() + " " + response.getBody());
 				bsinitiate.setStatus(STATUS.FAILED);
 				initiateRequestPojo.setStatus(STATUS.FAILED.toString());
 				featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED", null);
 			}
 		} catch (Exception e) {
+			logger.error("generateUploadInitiateResponse failed {}", e);
+			bsinitiate.setResponse(e.getLocalizedMessage());
 			bsinitiate.setStatus(STATUS.FAILED);
 			initiateRequestPojo.setStatus(STATUS.FAILED.toString());
 			featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), "FAILED", null);

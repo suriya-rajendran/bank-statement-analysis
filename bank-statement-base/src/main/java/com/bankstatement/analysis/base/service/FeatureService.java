@@ -3,6 +3,7 @@ package com.bankstatement.analysis.base.service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -281,7 +282,7 @@ public class FeatureService {
 										.findFirst().orElse(null);
 								if (details == null) {
 									details = new CustomerTransactionDetails();
-								}
+								} 
 								details.setRequestType(tran.getType());
 
 								details.setScannedDoc(tran.isScannedDoc());
@@ -304,8 +305,8 @@ public class FeatureService {
 
 								boolean valid = vo.getTransactionDetail().stream()
 										.anyMatch(d -> TRANSACTION_STATUS.COMPLETED == d.getTransactionStatus());
-								
-								if(!valid) {
+
+								if (!valid) {
 									vo.setCustomerResponse(null);
 								}
 

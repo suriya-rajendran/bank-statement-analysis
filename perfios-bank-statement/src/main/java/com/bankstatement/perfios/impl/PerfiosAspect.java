@@ -24,7 +24,7 @@ public class PerfiosAspect {
 	@Autowired
 	BankStatementImpl bankStatementImpl;
 
-	@Around("execution(* com.bankstatement.perfios.async.AsyncBankStatementService.generateUploadInitiateResponse(..))")
+//	@Around("execution(* com.bankstatement.perfios.async.AsyncBankStatementService.generateUploadInitiateResponse(..))")
 	public void aroundGenerateUploadInitiateResponse(ProceedingJoinPoint joinPoint) throws Throwable {
 
 		Object result = joinPoint.proceed();

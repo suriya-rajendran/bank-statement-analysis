@@ -16,6 +16,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.util.CollectionUtils;
 
 import com.bankstatement.analysis.base.datamodel.CustomerTransactionDetails.TRANSACTION_STATUS;
@@ -31,6 +33,8 @@ import lombok.Setter;
 @Data
 @Table(name = "customer")
 @EqualsAndHashCode(callSuper = true)
+@DynamicUpdate
+@DynamicInsert
 public class Customer extends BaseEntity {
 
 	@Column(name = "customer_reference_no")
