@@ -204,7 +204,7 @@ public class PerifiosBankStatementServiceImpl implements
 						bsinitiate.setDocWebNo(detail.getWebRefID());
 
 					}
-					
+
 					if (STATUS.COMPLETED != bsinitiate.getStatus()) {
 						featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), null,
 								"INITIATED");
@@ -248,12 +248,13 @@ public class PerifiosBankStatementServiceImpl implements
 		}
 	}
 
-	public InitiateRequestPojo saveInitiateResponse(InitiateRequestPojo initiateRequestPojo, CustomerTransactionDetails detail,
-			BankStatementInitiate bsinitiate, String actualPayload) throws Exception {
+	public InitiateRequestPojo saveInitiateResponse(InitiateRequestPojo initiateRequestPojo,
+			CustomerTransactionDetails detail, BankStatementInitiate bsinitiate, String actualPayload)
+			throws Exception {
 		generateInitiateResponse(initiateRequestPojo, bsinitiate, actualPayload);
 
 		if (!StringUtils.isEmpty(initiateRequestPojo.getUrl())) {
-			detail=customerTransactionDetailsRepo.findByWebRefID(detail.getWebRefID());
+			detail = customerTransactionDetailsRepo.findByWebRefID(detail.getWebRefID());
 			detail.setLink(initiateRequestPojo.getUrl());
 			detail.setExpiry(initiateRequestPojo.getExpiry());
 			customerTransactionDetailsRepo.save(detail);
@@ -369,56 +370,70 @@ public class PerifiosBankStatementServiceImpl implements
 					bankStatementTransaction = new BankStatementTransaction();
 					bankStatementTransaction.setCustomProcessId(bsinitiate.getProcessId());
 					bankStatementTransaction.setProcessType(bsinitiate.getProcessType());
-					
+
 				}
-				featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), null,
-						"CALLBACK");
+				if (STATUS.COMPLETED != bankStatementTransaction.getStatus()) {
+					featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(), null,
+							"CALLBACK");
 
-				if ("UPLOAD".equalsIgnoreCase(bsinitiate.getRequestType())) {
-					pojo.setTransactionId(bsinitiate.getTransactionId());
-					pojo.setScannedDoc(bsinitiate.isScannedDoc());
-					ObjectMapper mapper = new ObjectMapper();
-					JSONObject xmlJSONObj = XML.toJSONObject(bsinitiate.getResponse());
-					final Map<String, Object> responseAsMap1 = mapper.readValue(xmlJSONObj.toString(),
-							new TypeReference<Map<String, Object>>() {
-							});
-					try {
-						if (responseAsMap1.containsKey("file")) {
-							final Map<String, String> file = (Map<String, String>) responseAsMap1.get("file");
-							String fileId = file.get("fileId");
+					if ("UPLOAD".equalsIgnoreCase(bsinitiate.getRequestType())) {
+						pojo.setTransactionId(bsinitiate.getTransactionId());
+						pojo.setScannedDoc(bsinitiate.isScannedDoc());
+						ObjectMapper mapper = new ObjectMapper();
+						JSONObject xmlJSONObj = XML.toJSONObject(bsinitiate.getResponse());
+						final Map<String, Object> responseAsMap1 = mapper.readValue(xmlJSONObj.toString(),
+								new TypeReference<Map<String, Object>>() {
+								});
+						try {
+							if (responseAsMap1.containsKey("file")) {
+								final Map<String, String> file = (Map<String, String>) responseAsMap1.get("file");
+								String fileId = file.get("fileId");
 
-							initiateRequestPojo.setFileId(fileId);
+								initiateRequestPojo.setFileId(fileId);
 
-							RestTemplate restTemplate = new RestTemplate();
-							String xPerfiosDate = perfiosUploadHelper.createXPerfiosDate();
-							String fileProcessUrl = perfiosUploadHelper.getProcessFileUrl()
-									.replace("{perfiosTransactionId}", bsinitiate.getTransactionId());
-							String url = "https://" + perfiosUploadHelper.getPerfiosHost() + fileProcessUrl;
-							logger.info("Perfios Upload File url {} ", url);
-							String payload = createProcessFilePayload(fileId, bsinitiate.getInstitutionType());
-							String signature = perfiosUploadHelper.createSignature(HttpMethod.POST.name(),
-									fileProcessUrl, payload, xPerfiosDate, null);
-							logger.info("Perfios signature created successfully ");
-							HttpHeaders httpHeaders = getHttpHeaders(payload, signature, xPerfiosDate,
-									"application/xml");
-							HttpEntity<String> entity = new HttpEntity<String>(payload, httpHeaders);
-							logger.info("Process file entity {} ", entity);
-							ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity,
-									String.class);
-							if (HttpStatus.OK.equals(response.getStatusCode()) && response != null
-									&& response.getBody() != null) {
-								xmlJSONObj = XML.toJSONObject(response.getBody());
-								TransactionResponse jsonResponse = objectMapper.readValue(xmlJSONObj.toString(),
-										TransactionResponse.class);
+								RestTemplate restTemplate = new RestTemplate();
+								String xPerfiosDate = perfiosUploadHelper.createXPerfiosDate();
+								String fileProcessUrl = perfiosUploadHelper.getProcessFileUrl()
+										.replace("{perfiosTransactionId}", bsinitiate.getTransactionId());
+								String url = "https://" + perfiosUploadHelper.getPerfiosHost() + fileProcessUrl;
+								logger.info("Perfios Upload File url {} ", url);
+								String payload = createProcessFilePayload(fileId, bsinitiate.getInstitutionType());
+								String signature = perfiosUploadHelper.createSignature(HttpMethod.POST.name(),
+										fileProcessUrl, payload, xPerfiosDate, null);
+								logger.info("Perfios signature created successfully ");
+								HttpHeaders httpHeaders = getHttpHeaders(payload, signature, xPerfiosDate,
+										"application/xml");
+								HttpEntity<String> entity = new HttpEntity<String>(payload, httpHeaders);
+								logger.info("Process file entity {} ", entity);
+								ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity,
+										String.class);
+								if (HttpStatus.OK.equals(response.getStatusCode()) && response != null
+										&& response.getBody() != null) {
+									xmlJSONObj = XML.toJSONObject(response.getBody());
+									TransactionResponse jsonResponse = objectMapper.readValue(xmlJSONObj.toString(),
+											TransactionResponse.class);
 
-								bankStatementTransaction.setResponse(response.getBody());
-								if (jsonResponse != null && jsonResponse.getBankStatement() != null
-										&& jsonResponse.getBankStatement().getBankAccounts() != null
-										&& jsonResponse.getBankStatement().getBankAccounts().getBankAccount() != null
-										&& jsonResponse.getBankStatement().getBankAccounts().getBankAccount()
-												.isComplete()) {
-									bankStatementTransaction.setStatus(STATUS.COMPLETED);
+									bankStatementTransaction.setResponse(response.getBody());
+									if (jsonResponse != null && jsonResponse.getBankStatement() != null
+											&& jsonResponse.getBankStatement().getBankAccounts() != null
+											&& jsonResponse.getBankStatement().getBankAccounts()
+													.getBankAccount() != null
+											&& jsonResponse.getBankStatement().getBankAccounts().getBankAccount()
+													.isComplete()) {
+										bankStatementTransaction.setStatus(STATUS.COMPLETED);
 
+										initiateReport(bankStatementTransaction, pojo);
+									} else {
+										bankStatementTransaction.setStatus(STATUS.FAILED);
+										bankStatementTransaction.setResponse(response.getBody());
+										featureService.updateCustomer(bsinitiate.getCustWebNo(),
+												bsinitiate.getDocWebNo(), "FAILED", null);
+
+									}
+
+									// SCANNED DOC
+								} else if (HttpStatus.ACCEPTED.equals(response.getStatusCode()) && response != null
+										&& response.getBody() != null) {
 									initiateReport(bankStatementTransaction, pojo);
 								} else {
 									bankStatementTransaction.setStatus(STATUS.FAILED);
@@ -428,123 +443,114 @@ public class PerifiosBankStatementServiceImpl implements
 
 								}
 
-								// SCANNED DOC
-							} else if (HttpStatus.ACCEPTED.equals(response.getStatusCode()) && response != null
-									&& response.getBody() != null) {
-								initiateReport(bankStatementTransaction, pojo);
+							}
+						} catch (Exception e) {
+							if (e instanceof HttpClientErrorException) {
+								HttpClientErrorException httpClientErrorException = (HttpClientErrorException) e;
+
+								if (httpClientErrorException.getStatusCode().value() == 404) {
+									String responseBody = httpClientErrorException.getResponseBodyAsString();
+									xmlJSONObj = XML.toJSONObject(responseBody);
+									parseErrorMessageFromJson(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(),
+											xmlJSONObj.toString());
+
+								}
+							}
+							bankStatementTransaction.setStatus(STATUS.FAILED);
+							bankStatementTransaction.setResponse(e.getLocalizedMessage());
+						}
+						bankStatementImpl.saveBankStatementTransaction(bankStatementTransaction);
+					} else {
+						Map<String, Object> response = objectMapper.readValue(bsinitiate.getResponse(),
+								new TypeReference<Map<String, Object>>() {
+								});
+						if (response != null && response.containsKey(SUCCESS_RESPONSE)) {
+							Map<String, Object> successResponse = (Map<String, Object>) response.get(SUCCESS_RESPONSE);
+
+							initiateRequestPojo.setUrl((String) successResponse.get(TRANSACTION_URL));
+							initiateRequestPojo.setExpiry((String) successResponse.get(TRANSACTION_EXPIRES));
+
+							if (STATUS.COMPLETED != bankStatementTransaction.getStatus()) {
+
+								String payload = createTxnStatusPayload(bsinitiate.getProcessId());
+								bankStatementTransaction.setRequest(payload);
+
+								JSONObject json = new JSONObject(payload);
+								String actualPayload = XML.toString(json);
+								HttpResponse httpResponse = perfiosHelper.executeRequest(HttpPost.class,
+										perfiosConfiguration.getTxnStatusUrl(), actualPayload,
+										"application/x-www-form-urlencoded", null, null);
+								String responseBody = EntityUtils.toString(httpResponse.getEntity());
+								// TODO Change to debug
+								logger.info("response " + responseBody);
+
+								JSONObject xmlJSONObj = XML.toJSONObject(responseBody);
+
+								JsonNode jsonNode = objectMapper.readTree(xmlJSONObj.toString());
+
+								// Get the "Part" node
+								JsonNode partNode = jsonNode.path("Status").path("Part");
+
+								if (!partNode.isArray()) {
+									// Convert the "Part" object to an array
+									JsonNode[] partsArray = { partNode };
+
+									// Replace the "Part" object with the array
+									((ObjectNode) jsonNode.path("Status")).set("Part",
+											objectMapper.valueToTree(partsArray));
+								}
+
+								// Convert the updated JSON back to a string
+								String updatedResponseBody = objectMapper.writeValueAsString(jsonNode);
+
+								logger.info("response JSON: " + updatedResponseBody);
+								TransactionStatusResponse transactionStatusResponse = objectMapper
+										.readValue(updatedResponseBody, TransactionStatusResponse.class);
+
+								bankStatementTransaction
+										.setResponseCode(String.valueOf(httpResponse.getStatusLine().getStatusCode()));
+								bankStatementTransaction.setResponse(updatedResponseBody);
+								if ("completed".equalsIgnoreCase(transactionStatusResponse.getStatus().getProcessing())
+										&& "available"
+												.equalsIgnoreCase(transactionStatusResponse.getStatus().getFiles())) {
+									bankStatementTransaction.setStatus(STATUS.COMPLETED);
+								} else {
+									bankStatementTransaction.setStatus(STATUS.PENDING);
+								}
+								for (Part vo : transactionStatusResponse.getStatus().getPart()) {
+									TransactionStatusDetail transactionStatusDetail = new TransactionStatusDetail();
+
+									transactionStatusDetail.setStatus(vo.getStatus());
+									transactionStatusDetail.setReason(vo.getReason());
+									transactionStatusDetail.setErrorCode(vo.getErrorCode());
+									transactionStatusDetail.setTransactionId(vo.getPerfiosTransactionId());
+									// getReportStatus(bankStatementTransaction, vo, transactionStatusDetail);
+									transactionStatusDetail.setReportStatus("Initiated");
+									transactionStatusPojo.getTransactionDetails().add(transactionStatusDetail);
+								}
+								transactionStatusPojo.setStatus(transactionStatusResponse.getStatus().getProcessing());
+								bankStatementImpl.saveBankStatementTransaction(bankStatementTransaction);
+
 							} else {
-								bankStatementTransaction.setStatus(STATUS.FAILED);
-								bankStatementTransaction.setResponse(response.getBody());
-								featureService.updateCustomer(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(),
-										"FAILED", null);
+								TransactionStatusResponse transactionStatusResponse = objectMapper.readValue(
+										bankStatementTransaction.getResponse(), TransactionStatusResponse.class);
+								for (Part vo : transactionStatusResponse.getStatus().getPart()) {
 
+									TransactionStatusDetail transactionStatusDetail = new TransactionStatusDetail();
+
+									transactionStatusDetail.setStatus(vo.getStatus());
+									transactionStatusDetail.setReason(vo.getReason());
+									transactionStatusDetail.setErrorCode(vo.getErrorCode());
+									transactionStatusDetail.setTransactionId(vo.getPerfiosTransactionId());
+
+									transactionStatusDetail.setReportStatus("Initiated");
+
+									transactionStatusPojo.getTransactionDetails().add(transactionStatusDetail);
+								}
 							}
-
-						}
-					} catch (Exception e) {
-						if (e instanceof HttpClientErrorException) {
-							HttpClientErrorException httpClientErrorException = (HttpClientErrorException) e;
-
-							if (httpClientErrorException.getStatusCode().value() == 404) {
-								String responseBody = httpClientErrorException.getResponseBodyAsString();
-								xmlJSONObj = XML.toJSONObject(responseBody);
-								parseErrorMessageFromJson(bsinitiate.getCustWebNo(), bsinitiate.getDocWebNo(),
-										xmlJSONObj.toString());
-
+							if (STATUS.COMPLETED == bankStatementTransaction.getStatus()) {
+								initiateReport(bankStatementTransaction, null);
 							}
-						}
-						bankStatementTransaction.setStatus(STATUS.FAILED);
-						bankStatementTransaction.setResponse(e.getLocalizedMessage());
-					}
-					bankStatementImpl.saveBankStatementTransaction(bankStatementTransaction);
-				} else {
-					Map<String, Object> response = objectMapper.readValue(bsinitiate.getResponse(),
-							new TypeReference<Map<String, Object>>() {
-							});
-					if (response != null && response.containsKey(SUCCESS_RESPONSE)) {
-						Map<String, Object> successResponse = (Map<String, Object>) response.get(SUCCESS_RESPONSE);
-
-						initiateRequestPojo.setUrl((String) successResponse.get(TRANSACTION_URL));
-						initiateRequestPojo.setExpiry((String) successResponse.get(TRANSACTION_EXPIRES));
-
-						if (STATUS.COMPLETED != bankStatementTransaction.getStatus()) {
-
-							String payload = createTxnStatusPayload(bsinitiate.getProcessId());
-							bankStatementTransaction.setRequest(payload);
-
-							JSONObject json = new JSONObject(payload);
-							String actualPayload = XML.toString(json);
-							HttpResponse httpResponse = perfiosHelper.executeRequest(HttpPost.class,
-									perfiosConfiguration.getTxnStatusUrl(), actualPayload,
-									"application/x-www-form-urlencoded", null, null);
-							String responseBody = EntityUtils.toString(httpResponse.getEntity());
-							// TODO Change to debug
-							logger.info("response " + responseBody);
-
-							JSONObject xmlJSONObj = XML.toJSONObject(responseBody);
-
-							JsonNode jsonNode = objectMapper.readTree(xmlJSONObj.toString());
-
-							// Get the "Part" node
-							JsonNode partNode = jsonNode.path("Status").path("Part");
-
-							if (!partNode.isArray()) {
-								// Convert the "Part" object to an array
-								JsonNode[] partsArray = { partNode };
-
-								// Replace the "Part" object with the array
-								((ObjectNode) jsonNode.path("Status")).set("Part",
-										objectMapper.valueToTree(partsArray));
-							}
-
-							// Convert the updated JSON back to a string
-							String updatedResponseBody = objectMapper.writeValueAsString(jsonNode);
-
-							logger.info("response JSON: " + updatedResponseBody);
-							TransactionStatusResponse transactionStatusResponse = objectMapper
-									.readValue(updatedResponseBody, TransactionStatusResponse.class);
-
-							bankStatementTransaction
-									.setResponseCode(String.valueOf(httpResponse.getStatusLine().getStatusCode()));
-							bankStatementTransaction.setResponse(updatedResponseBody);
-							if ("completed".equalsIgnoreCase(transactionStatusResponse.getStatus().getProcessing())) {
-								bankStatementTransaction.setStatus(STATUS.COMPLETED);
-							} else {
-								bankStatementTransaction.setStatus(STATUS.PENDING);
-							}
-							for (Part vo : transactionStatusResponse.getStatus().getPart()) {
-								TransactionStatusDetail transactionStatusDetail = new TransactionStatusDetail();
-
-								transactionStatusDetail.setStatus(vo.getStatus());
-								transactionStatusDetail.setReason(vo.getReason());
-								transactionStatusDetail.setErrorCode(vo.getErrorCode());
-								transactionStatusDetail.setTransactionId(vo.getPerfiosTransactionId());
-								// getReportStatus(bankStatementTransaction, vo, transactionStatusDetail);
-								transactionStatusDetail.setReportStatus("Initiated");
-								transactionStatusPojo.getTransactionDetails().add(transactionStatusDetail);
-							}
-							transactionStatusPojo.setStatus(transactionStatusResponse.getStatus().getProcessing());
-							bankStatementImpl.saveBankStatementTransaction(bankStatementTransaction);
-
-						} else {
-							TransactionStatusResponse transactionStatusResponse = objectMapper
-									.readValue(bankStatementTransaction.getResponse(), TransactionStatusResponse.class);
-							for (Part vo : transactionStatusResponse.getStatus().getPart()) {
-
-								TransactionStatusDetail transactionStatusDetail = new TransactionStatusDetail();
-
-								transactionStatusDetail.setStatus(vo.getStatus());
-								transactionStatusDetail.setReason(vo.getReason());
-								transactionStatusDetail.setErrorCode(vo.getErrorCode());
-								transactionStatusDetail.setTransactionId(vo.getPerfiosTransactionId());
-
-								transactionStatusDetail.setReportStatus("Initiated");
-
-								transactionStatusPojo.getTransactionDetails().add(transactionStatusDetail);
-							}
-						}
-						if (STATUS.COMPLETED == bankStatementTransaction.getStatus()) {
-							initiateReport(bankStatementTransaction, null);
 						}
 					}
 				}
